@@ -102,12 +102,12 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'DOMINO DUEL',
+                  'DOMINO VENEZOLANO',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 36,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
+                    letterSpacing: 2.5,
                   ),
                   textAlign: TextAlign.center,
                 ),

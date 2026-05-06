@@ -6,11 +6,11 @@ import 'screens/team_setup_screen.dart';
 import 'screens/game_screen.dart';
 
 void main() {
-  runApp(const DominoDuelApp());
+  runApp(const DominoVenezolanoApp());
 }
 
-class DominoDuelApp extends StatelessWidget {
-  const DominoDuelApp({super.key});
+class DominoVenezolanoApp extends StatelessWidget {
+  const DominoVenezolanoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class DominoDuelApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProv, _) {
           return MaterialApp(
-            title: 'Domino Duel',
+            title: 'Domino Venezolano',
             debugShowCheckedModeBanner: false,
             themeMode: themeProv.mode,
             theme: ThemeData(

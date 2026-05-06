@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game.dart';
 import '../models/round.dart';
+import '../utils/venezuelan_phrases.dart';
 
 class GameProvider extends ChangeNotifier {
   Game? _currentGame;
@@ -19,30 +20,12 @@ class GameProvider extends ChangeNotifier {
   int get team1Wins => _team1Wins;
   int get team2Wins => _team2Wins;
 
-  // Venezuelan phrases for splash/header
-  static const List<String> venezuelanPhrases = [
-    '¡Eso es puro talento, mi pana!',
-    '¡Se picó el dominó!',
-    '¡Guárdame esa ficha!',
-    '¡Qué molleja de jugada!',
-    '¡Tá barato, dame dos!',
-    '¡Ajá, y ahora qué?',
-  ];
-
-  // Victory messages
-  static const List<String> victoryMessages = [
-    '¡DOMINÓ! ¡GANARON ESTOS CACHACOS!',
-    '¡Eso es juego, mano!',
-    '¡Que viva Venezuela, carajo!',
-  ];
-
-  String getRandomPhrase() {
-    return (List<String>.from(venezuelanPhrases)..shuffle()).first;
-  }
-
-  String getRandomVictory() {
-    return (List<String>.from(victoryMessages)..shuffle()).first;
-  }
+  // Backwards-compatible API: delegates to VenezuelanPhrases
+  String getRandomPhrase() => VenezuelanPhrases.getRandomSplash();
+  String getRandomVictory() => VenezuelanPhrases.getVictoryPhrase();
+  String getManoPhrase(int points) => VenezuelanPhrases.getManoPhrase(points);
+  String getCloseToWinPhrase() => VenezuelanPhrases.getCloseToWinPhrase();
+  String getLosingBigPhrase() => VenezuelanPhrases.getLosingBigPhrase();
 
   Future<void> startNewGame({
     required String team1Name,

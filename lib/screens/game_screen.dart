@@ -210,6 +210,7 @@ class _GameScreenState extends State<GameScreen> {
                 return;
               }
 
+              final messenger = ScaffoldMessenger.of(context);
               provider.addMano(losingTeamIndex, points, isTranca: false);
               _playClick();
               Navigator.pop(context);
@@ -217,6 +218,51 @@ class _GameScreenState extends State<GameScreen> {
               if (provider.currentGame!.isGameOver && !_victoryShown) {
                 _victoryShown = true;
                 _showVictoryDialog();
+              } else {
+                // Show contextual Venezuelan phrase based on points scored
+                final phrase = provider.getManoPhrase(points);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      phrase,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    backgroundColor: Colors.amber.shade800,
+                    duration: const Duration(milliseconds: 1800),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+
+                // If a team just crossed the 75pt threshold, show extra hype
+                final game = provider.currentGame!;
+                final justCrossed75 = (game.team1Score >= 75 &&
+                        game.team1Score - points < 75 &&
+                        losingTeamIndex == 1) ||
+                    (game.team2Score >= 75 &&
+                        game.team2Score - points < 75 &&
+                        losingTeamIndex == 0);
+                if (justCrossed75) {
+                  Future.delayed(const Duration(milliseconds: 1900), () {
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          provider.getCloseToWinPhrase(),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        backgroundColor: Colors.deepOrange.shade700,
+                        duration: const Duration(milliseconds: 2200),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  });
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -260,12 +306,12 @@ class _GameScreenState extends State<GameScreen> {
         );
         if (bytes != null) {
           final dir = await getTemporaryDirectory();
-          final file = File('${dir.path}/domino_duel_libreta.png');
+          final file = File('${dir.path}/domino_venezolano_libreta.png');
           await file.writeAsBytes(bytes);
           await Share.shareXFiles(
             [XFile(file.path)],
             text: text,
-            subject: 'Domino Duel - Libreta',
+            subject: 'Domino Venezolano - Libreta',
           );
           return;
         }
@@ -273,7 +319,7 @@ class _GameScreenState extends State<GameScreen> {
         // fall back to text share
       }
     }
-    await Share.share(text, subject: 'Domino Duel');
+    await Share.share(text, subject: 'Domino Venezolano');
   }
 
   String _buildShareText(Game game, GameProvider provider) {
@@ -284,7 +330,7 @@ class _GameScreenState extends State<GameScreen> {
     final winner = game.winner;
     final header = winner != null
         ? '🏆 ¡$winner ganó la partida!'
-        : '🎲 Domino Duel - Partida en curso';
+        : '🎲 Domino Venezolano - Partida en curso';
     return '''$header
 
 $scoreLine
@@ -292,7 +338,7 @@ $matchLine
 
 Manos jugadas: ${game.rounds.length}
 
-— Anotado con Domino Duel 🐷''';
+— Anotado con Domino Venezolano 🇻🇪''';
   }
 
   void _showVictoryDialog() {

@@ -1,5 +1,5 @@
-name: domino_duel
-description: "Venezuelan dominoes score tracking app with authentic sabor criollo"
+name: domino_venezolano
+description: "Domino Venezolano: la libreta digital del dominó criollo, con todo el sabor venezolano."
 publish_to: 'none'
 
 # The following defines the version and build number for your application.
