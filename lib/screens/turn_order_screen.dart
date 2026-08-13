@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/game_provider.dart';
+import '../providers/theme_provider.dart';
 import 'game_screen.dart';
 
 class TurnOrderScreen extends StatefulWidget {
@@ -10,6 +14,8 @@ class TurnOrderScreen extends StatefulWidget {
   final String team1Player2;
   final String team2Player1;
   final String team2Player2;
+  final List<int>? initialPlayingOrder;
+  final bool isRematch;
 
   const TurnOrderScreen({
     super.key,
@@ -19,6 +25,8 @@ class TurnOrderScreen extends StatefulWidget {
     required this.team1Player2,
     required this.team2Player1,
     required this.team2Player2,
+    this.initialPlayingOrder,
+    this.isRematch = false,
   });
 
   @override
@@ -26,119 +34,173 @@ class TurnOrderScreen extends StatefulWidget {
 }
 
 class _TurnOrderScreenState extends State<TurnOrderScreen> {
-  // Store the playing order as indices (0-3), null means unassigned
-  List<int?> playingOrder = [null, null, null, null];
-  int? selectedPlayerId; // Currently selected player to assign
+  late List<int?> playingOrder;
+  int? selectedPlayerId;
+  bool _isStarting = false;
 
-  List<Map<String, dynamic>> get allPlayers => [
+  List<Map<String, Object>> get allPlayers => [
         {
           'name': widget.team1Player1,
           'team': widget.team1Name,
           'teamIndex': 0,
-          'playerIndex': 0,
           'id': 0,
         },
         {
           'name': widget.team1Player2,
           'team': widget.team1Name,
           'teamIndex': 0,
-          'playerIndex': 1,
           'id': 1,
         },
         {
           'name': widget.team2Player1,
           'team': widget.team2Name,
           'teamIndex': 1,
-          'playerIndex': 0,
           'id': 2,
         },
         {
           'name': widget.team2Player2,
           'team': widget.team2Name,
           'teamIndex': 1,
-          'playerIndex': 1,
           'id': 3,
         },
       ];
 
-  bool get isOrderComplete {
-    return playingOrder.every((slot) => slot != null);
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialPlayingOrder;
+    final isValid = initial != null &&
+        initial.length == 4 &&
+        initial.toSet().length == 4 &&
+        initial.every((id) => id >= 0 && id <= 3);
+    playingOrder = isValid
+        ? initial.map<int?>((id) => id).toList()
+        : <int?>[null, null, null, null];
   }
 
-  String? validateOrder() {
-    if (!isOrderComplete) {
-      return 'Debes asignar los 4 puestos';
-    }
+  bool get isOrderComplete => playingOrder.every((slot) => slot != null);
 
-    // Check that no two consecutive players are from the same team
+  int _teamOf(int playerId) => playerId < 2 ? 0 : 1;
+
+  int _teammateOf(int playerId) {
+    if (playerId == 0) return 1;
+    if (playerId == 1) return 0;
+    if (playerId == 2) return 3;
+    return 2;
+  }
+
+  int _oppositeOf(int position) => (position + 2) % 4;
+
+  String? _validateOrder() {
+    if (!isOrderComplete) return 'Debes ubicar a los dos equipos';
+
     for (int i = 0; i < 4; i++) {
-      final currentPlayerId = playingOrder[i]!;
-      final nextPlayerId = playingOrder[(i + 1) % 4]!;
-      
-      final currentPlayer = allPlayers[currentPlayerId];
-      final nextPlayer = allPlayers[nextPlayerId];
-      
-      if (currentPlayer['teamIndex'] == nextPlayer['teamIndex']) {
-        return 'No pueden jugar dos del mismo equipo seguidos.\n${currentPlayer['name']} y ${nextPlayer['name']} están consecutivos.';
+      final current = playingOrder[i]!;
+      final next = playingOrder[(i + 1) % 4]!;
+      if (_teamOf(current) == _teamOf(next)) {
+        return 'Los compañeros deben quedar uno frente al otro';
       }
     }
-
     return null;
   }
 
   void _selectPlayer(int playerId) {
     setState(() {
-      selectedPlayerId = playerId;
+      selectedPlayerId = selectedPlayerId == playerId ? null : playerId;
     });
   }
 
   void _assignToPosition(int position) {
-    if (selectedPlayerId == null) return;
-    
-    setState(() {
-      // Remove player from any previous position
-      for (int i = 0; i < 4; i++) {
-        if (playingOrder[i] == selectedPlayerId) {
-          playingOrder[i] = null;
-        }
-      }
-      // Assign to new position
-      playingOrder[position] = selectedPlayerId;
-      selectedPlayerId = null; // Deselect after assignment
-    });
-  }
-
-  void _removeFromPosition(int position) {
-    setState(() {
-      playingOrder[position] = null;
-    });
-  }
-
-  void _startGame() {
-    final error = validateOrder();
-    if (error != null) {
+    final playerId = selectedPlayerId;
+    if (playerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
+        const SnackBar(content: Text('Selecciona primero un jugador')),
       );
       return;
     }
 
-    final provider = Provider.of<GameProvider>(context, listen: false);
+    final teammateId = _teammateOf(playerId);
+    final oppositePosition = _oppositeOf(position);
+    final nextOrder = List<int?>.from(playingOrder);
 
-    provider.startNewGame(
-      team1Name: widget.team1Name,
-      team2Name: widget.team2Name,
-      team1Player1: widget.team1Player1,
-      team1Player2: widget.team1Player2,
-      team2Player1: widget.team2Player1,
-      team2Player2: widget.team2Player2,
-      playingOrder: playingOrder.map((id) => id!).toList(),
-    );
+    final displaced = <int>[];
+    for (final seat in [position, oppositePosition]) {
+      final occupant = nextOrder[seat];
+      if (occupant != null && _teamOf(occupant) != _teamOf(playerId)) {
+        displaced.add(occupant);
+      }
+    }
 
+    for (int i = 0; i < nextOrder.length; i++) {
+      final occupant = nextOrder[i];
+      if (occupant == playerId ||
+          occupant == teammateId ||
+          (occupant != null &&
+              displaced.isNotEmpty &&
+              _teamOf(occupant) == _teamOf(displaced.first))) {
+        nextOrder[i] = null;
+      }
+    }
+
+    nextOrder[position] = playerId;
+    nextOrder[oppositePosition] = teammateId;
+
+    if (displaced.isNotEmpty) {
+      final displacedPlayer = displaced.first;
+      final remainingPosition = nextOrder.indexOf(null);
+      nextOrder[remainingPosition] = displacedPlayer;
+      nextOrder[_oppositeOf(remainingPosition)] =
+          _teammateOf(displacedPlayer);
+    }
+
+    setState(() {
+      playingOrder = nextOrder;
+      selectedPlayerId = null;
+    });
+  }
+
+  void _clearTeamAtPosition(int position) {
+    final playerId = playingOrder[position];
+    if (playerId == null) return;
+    final teammateId = _teammateOf(playerId);
+    setState(() {
+      for (int i = 0; i < playingOrder.length; i++) {
+        if (playingOrder[i] == playerId || playingOrder[i] == teammateId) {
+          playingOrder[i] = null;
+        }
+      }
+      selectedPlayerId = playerId;
+    });
+  }
+
+  Future<void> _startGame() async {
+    final error = _validateOrder();
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isStarting = true);
+    final provider = context.read<GameProvider>();
+    final order = playingOrder.cast<int>();
+
+    if (widget.isRematch) {
+      await provider.startRevancha(playingOrder: order);
+    } else {
+      await provider.startNewGame(
+        team1Name: widget.team1Name,
+        team2Name: widget.team2Name,
+        team1Player1: widget.team1Player1,
+        team1Player2: widget.team1Player2,
+        team2Player1: widget.team2Player1,
+        team2Player2: widget.team2Player2,
+        playingOrder: order,
+      );
+    }
+
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const GameScreen()),
@@ -147,117 +209,106 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(
+          widget.isRematch ? 'Nueva mano, nueva salida' : 'Orden de juego',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, theme, _) => IconButton(
+              tooltip: theme.isDark ? 'Usar tema claro' : 'Usar tema oscuro',
+              onPressed: theme.toggle,
+              icon: Icon(theme.isDark ? Icons.light_mode : Icons.dark_mode),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
-
-              // Title
-              const Icon(
-                Icons.swap_vert,
-                size: 80,
-                color: Colors.amber,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'ORDEN DE JUEGO',
+              Text(
+                widget.isRematch
+                    ? 'Los equipos se mantienen. Cambia quién sale y confirma cómo están sentados.'
+                    : 'Ubica a cada jugador tal como está sentado en la mesa.',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                  color: colors.onSurfaceVariant,
+                  fontSize: 15,
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
-
-              const SizedBox(height: 12),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              const SizedBox(height: 18),
+              _buildPlayersSelector(),
+              const SizedBox(height: 22),
+              Text(
+                selectedPlayerId == null
+                    ? 'Selecciona un jugador y luego toca su puesto'
+                    : 'Ahora toca el puesto de ${allPlayers[selectedPlayerId!]['name']}',
+                style: TextStyle(
+                  color: selectedPlayerId == null
+                      ? colors.onSurfaceVariant
+                      : colors.primary,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Column(
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              _buildTable(),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      '🐷 Define el orden: 1º, 2º, 3º y 4º',
-                      style: TextStyle(
-                        color: Colors.amber.shade300,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Icon(Icons.people_alt_outlined,
+                        color: colors.onPrimaryContainer),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'El compañero se coloca automáticamente al frente: 1.º con 3.º y 2.º con 4.º.',
+                        style: TextStyle(
+                          color: colors.onPrimaryContainer,
+                          height: 1.35,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '1. Selecciona un jugador\n2. Haz click en una posición\n3. No pueden ir dos del mismo equipo seguidos',
-                      style: TextStyle(
-                        color: Colors.amber.withValues(alpha: 0.7),
-                        fontSize: 13,
-                      ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 30),
-
-              // Position slots
-              for (int pos = 0; pos < 4; pos++) ...[
-                _buildPositionSlot(pos),
-                if (pos < 3) const SizedBox(height: 12),
-              ],
-
-              const SizedBox(height: 30),
-
-              // Available players
-              const Text(
-                'SELECCIONA JUGADOR',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+              const SizedBox(height: 22),
+              FilledButton.icon(
+                key: const Key('start-game'),
+                onPressed: isOrderComplete && !_isStarting ? _startGame : null,
+                icon: _isStarting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.play_arrow_rounded),
+                label: Text(
+                  isOrderComplete
+                      ? widget.isRematch
+                          ? 'COMENZAR REVANCHA'
+                          : 'COMENZAR PARTIDA'
+                      : 'UBICA A LOS 4 JUGADORES',
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              
-              // Players grid
-              for (int id = 0; id < 4; id++)
-                if (!playingOrder.contains(id))
-                  _buildAvailablePlayer(id),
-
-              const SizedBox(height: 30),
-
-              // Start button
-              ElevatedButton(
-                onPressed: isOrderComplete ? _startGame : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.amber,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.grey.shade800,
-                  disabledForegroundColor: Colors.grey.shade600,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                ),
-                child: Text(
-                  isOrderComplete ? '¡COMENZAR PARTIDA!' : 'COMPLETA EL ORDEN',
-                  style: const TextStyle(
-                    fontSize: 18,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -268,205 +319,296 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
     );
   }
 
-  Widget _buildPositionSlot(int position) {
-    final playerId = playingOrder[position];
-    final positionLabels = ['1º SALE', '2º', '3º', '4º'];
-
-    return GestureDetector(
-      onTap: () {
-        if (playerId == null && selectedPlayerId != null) {
-          _assignToPosition(position);
-        }
-      },
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: playerId != null
-              ? Colors.green.withValues(alpha: 0.15)
-              : selectedPlayerId != null
-                  ? Colors.amber.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: playerId != null
-                ? Colors.green
-                : selectedPlayerId != null
-                    ? Colors.amber
-                    : Colors.white24,
-            width: 2,
-          ),
-        ),
-        child: playerId != null
-            ? _buildAssignedPlayer(position, playerId)
-            : Center(
-                child: Text(
-                  selectedPlayerId != null
-                      ? 'Toca aquí para asignar → ${positionLabels[position]}'
-                      : positionLabels[position],
-                  style: TextStyle(
-                    color: selectedPlayerId != null
-                        ? Colors.amber.withValues(alpha: 0.7)
-                        : Colors.white.withValues(alpha: 0.3),
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+  Widget _buildPlayersSelector() {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.outlineVariant),
       ),
-    );
-  }
-
-  Widget _buildAssignedPlayer(int position, int playerId) {
-    final player = allPlayers[playerId];
-    final positionLabels = ['1º', '2º', '3º', '4º'];
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         children: [
-          // Position badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              positionLabels[position],
-              style: TextStyle(
-                color: Colors.green.shade300,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          _buildTeamRow(0, widget.team1Name),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: colors.outlineVariant),
           ),
-
-          const SizedBox(width: 12),
-
-          // Player info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  player['name'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  player['team'] as String,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Remove button
-          IconButton(
-            onPressed: () => _removeFromPosition(position),
-            icon: const Icon(Icons.close, color: Colors.red, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
+          _buildTeamRow(1, widget.team2Name),
         ],
       ),
     );
   }
 
-  Widget _buildAvailablePlayer(int playerId) {
-    final player = allPlayers[playerId];
-    final isSelected = selectedPlayerId == playerId;
+  Widget _buildTeamRow(int teamIndex, String teamName) {
+    final colors = Theme.of(context).colorScheme;
+    final playerIds = teamIndex == 0 ? const [0, 1] : const [2, 3];
+    final teamColor = teamIndex == 0 ? colors.primary : colors.tertiary;
 
-    return GestureDetector(
-      onTap: () => _selectPlayer(playerId),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.amber.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? Colors.amber : Colors.white24,
-            width: isSelected ? 3 : 2,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          teamName.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: colors.onSurfaceVariant,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
           ),
         ),
-        child: Row(
+        const SizedBox(height: 8),
+        Row(
           children: [
-            // Selection indicator
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.amber
-                    : Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isSelected ? Colors.amber : Colors.white24,
-                  width: 2,
+            for (final playerId in playerIds) ...[
+              Expanded(child: _buildPlayerChip(playerId, teamColor)),
+              if (playerId == playerIds.first) const SizedBox(width: 10),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlayerChip(int playerId, Color teamColor) {
+    final colors = Theme.of(context).colorScheme;
+    final isSelected = selectedPlayerId == playerId;
+    final seat = playingOrder.indexOf(playerId);
+    final isAssigned = seat >= 0;
+
+    return Material(
+      color: isSelected
+          ? teamColor.withValues(alpha: 0.18)
+          : colors.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        key: Key('player-$playerId'),
+        onTap: () => _selectPlayer(playerId),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? teamColor : colors.outlineVariant,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isAssigned ? Icons.event_seat : Icons.person_outline,
+                size: 18,
+                color: isSelected || isAssigned
+                    ? teamColor
+                    : colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  allPlayers[playerId]['name']! as String,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              child: Center(
-                child: isSelected
-                    ? const Icon(
-                        Icons.check_circle,
-                        color: Colors.black,
-                        size: 24,
-                      )
-                    : Icon(
-                        Icons.person,
-                        color: Colors.white.withValues(alpha: 0.5),
-                        size: 24,
+              if (isAssigned)
+                Text(
+                  '${seat + 1}º',
+                  style: TextStyle(
+                    color: teamColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTable() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final dimension = math.min(constraints.maxWidth, 360.0).toDouble();
+        final seatWidth = math.min(112.0, dimension * 0.34).toDouble();
+        const seatHeight = 76.0;
+        final colors = Theme.of(context).colorScheme;
+
+        return Center(
+          child: SizedBox.square(
+            dimension: dimension,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: dimension * 0.36,
+                  height: dimension * 0.36,
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.5),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.shadow.withValues(alpha: 0.12),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
-              ),
-            ),
-
-            const SizedBox(width: 16),
-
-            // Player info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    player['name'] as String,
-                    style: TextStyle(
-                      color: isSelected ? Colors.amber : Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    player['team'] as String,
-                    style: TextStyle(
-                      color: isSelected
-                          ? Colors.amber.withValues(alpha: 0.7)
-                          : Colors.white54,
-                      fontSize: 14,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.casino_outlined,
+                          color: colors.onPrimaryContainer, size: 30),
+                      const SizedBox(height: 4),
+                      Text(
+                        'MESA',
+                        style: TextStyle(
+                          color: colors.onPrimaryContainer,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Icon(Icons.rotate_right,
+                          color: colors.onPrimaryContainer.withValues(alpha: 0.7),
+                          size: 18),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Positioned(
+                  top: 0,
+                  left: (dimension - seatWidth) / 2,
+                  child: _buildSeat(0, seatWidth, seatHeight),
+                ),
+                Positioned(
+                  right: 0,
+                  top: (dimension - seatHeight) / 2,
+                  child: _buildSeat(1, seatWidth, seatHeight),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: (dimension - seatWidth) / 2,
+                  child: _buildSeat(2, seatWidth, seatHeight),
+                ),
+                Positioned(
+                  left: 0,
+                  top: (dimension - seatHeight) / 2,
+                  child: _buildSeat(3, seatWidth, seatHeight),
+                ),
+              ],
             ),
+          ),
+        );
+      },
+    );
+  }
 
-            if (isSelected)
-              Icon(
-                Icons.arrow_upward,
-                color: Colors.amber,
-                size: 28,
-              ),
-          ],
+  Widget _buildSeat(int position, double width, double height) {
+    final colors = Theme.of(context).colorScheme;
+    final playerId = playingOrder[position];
+    final player = playerId == null ? null : allPlayers[playerId];
+    final teamColor = playerId == null
+        ? colors.outline
+        : _teamOf(playerId) == 0
+            ? colors.primary
+            : colors.tertiary;
+
+    return Material(
+      color: playerId == null
+          ? colors.surfaceContainerHigh
+          : teamColor.withValues(alpha: 0.16),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: Key('seat-$position'),
+        onTap: () => _assignToPosition(position),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: width,
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: playerId == null && selectedPlayerId != null
+                  ? colors.primary
+                  : teamColor,
+              width: playerId == null ? 1.5 : 2,
+            ),
+          ),
+          child: player == null
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, color: colors.onSurfaceVariant, size: 20),
+                    Text(
+                      '${position + 1}º${position == 0 ? ' · SALE' : ''}',
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                )
+              : Stack(
+                  children: [
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${position + 1}º${position == 0 ? ' · SALE' : ''}',
+                            style: TextStyle(
+                              color: teamColor,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            player['name']! as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.onSurface,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: IconButton(
+                        tooltip: 'Quitar equipo',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 28,
+                          height: 28,
+                        ),
+                        iconSize: 15,
+                        onPressed: () => _clearTeamAtPosition(position),
+                        icon: Icon(Icons.close, color: colors.onSurfaceVariant),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

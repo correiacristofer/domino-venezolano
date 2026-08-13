@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
@@ -14,6 +12,7 @@ import '../providers/game_provider.dart';
 import '../providers/theme_provider.dart';
 import 'team_setup_screen.dart';
 import 'easter_egg_screen.dart';
+import 'turn_order_screen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -30,6 +29,14 @@ class _GameScreenState extends State<GameScreen> {
   late final ConfettiController _victoryConfetti;
   final AudioPlayer _audioPlayer = AudioPlayer();
   final ScreenshotController _libretaController = ScreenshotController();
+
+  Color get _successColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.green.shade300
+      : Colors.green.shade700;
+
+  Color get _dangerColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.red.shade300
+      : Colors.red.shade700;
 
   @override
   void initState() {
@@ -100,24 +107,24 @@ class _GameScreenState extends State<GameScreen> {
         losingTeamIndex == 0 ? game.team1Name : game.team2Name;
 
     final pointsController = TextEditingController();
+    final colors = Theme.of(context).colorScheme;
+    final successColor = _successColor;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
         title: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.emoji_events,
-                    color: Colors.green.shade300, size: 28),
+                Icon(Icons.emoji_events, color: successColor, size: 28),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     winningTeamName,
                     style: TextStyle(
-                      color: Colors.green.shade300,
+                      color: successColor,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -130,7 +137,7 @@ class _GameScreenState extends State<GameScreen> {
             Text(
               '¿Cuántos puntos ganaron?',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: colors.onSurface,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -139,7 +146,7 @@ class _GameScreenState extends State<GameScreen> {
             Text(
               '(puntos que tenía $losingTeamName)',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: colors.onSurfaceVariant,
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -156,25 +163,25 @@ class _GameScreenState extends State<GameScreen> {
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.green.shade300,
+                color: successColor,
                 fontSize: 64,
                 fontWeight: FontWeight.bold,
               ),
               decoration: InputDecoration(
                 hintText: '0',
                 hintStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: colors.onSurface.withValues(alpha: 0.2),
                   fontSize: 64,
                 ),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: Colors.green.withValues(alpha: 0.3),
+                    color: successColor.withValues(alpha: 0.3),
                     width: 3,
                   ),
                 ),
                 focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: Colors.green.shade300,
+                    color: successColor,
                     width: 3,
                   ),
                 ),
@@ -184,7 +191,7 @@ class _GameScreenState extends State<GameScreen> {
             Text(
               'Rango válido: 0 - 84 puntos',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: colors.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -193,9 +200,9 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancelar',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 16),
             ),
           ),
           ElevatedButton(
@@ -266,8 +273,8 @@ class _GameScreenState extends State<GameScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade400,
-              foregroundColor: Colors.black,
+              backgroundColor: successColor,
+              foregroundColor: colors.surface,
               padding:
                   const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             ),
@@ -305,11 +312,14 @@ class _GameScreenState extends State<GameScreen> {
           delay: const Duration(milliseconds: 100),
         );
         if (bytes != null) {
-          final dir = await getTemporaryDirectory();
-          final file = File('${dir.path}/domino_venezolano_libreta.png');
-          await file.writeAsBytes(bytes);
           await Share.shareXFiles(
-            [XFile(file.path)],
+            [
+              XFile.fromData(
+                bytes,
+                mimeType: 'image/png',
+                name: 'domino_venezolano_libreta.png',
+              ),
+            ],
             text: text,
             subject: 'Domino Venezolano - Libreta',
           );
@@ -341,10 +351,30 @@ Manos jugadas: ${game.rounds.length}
 — Anotado con Domino Venezolano 🇻🇪''';
   }
 
+  void _openRematchOrder(Game game, BuildContext dialogContext) {
+    Navigator.of(dialogContext).pop();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => TurnOrderScreen(
+          team1Name: game.team1Name,
+          team2Name: game.team2Name,
+          team1Player1: game.team1Player1,
+          team1Player2: game.team1Player2,
+          team2Player1: game.team2Player1,
+          team2Player2: game.team2Player2,
+          initialPlayingOrder: game.playingOrder,
+          isRematch: true,
+        ),
+      ),
+    );
+  }
+
   void _showVictoryDialog() {
     final provider = Provider.of<GameProvider>(context, listen: false);
     final game = provider.currentGame!;
     final victoryMessage = provider.getRandomVictory();
+    final colors = Theme.of(context).colorScheme;
+    final successColor = _successColor;
 
     _victoryConfetti.play();
     _playFanfare();
@@ -355,16 +385,14 @@ Manos jugadas: ${game.rounds.length}
       builder: (context) => Stack(
         children: [
           AlertDialog(
-            backgroundColor: Colors.black,
             title: Column(
               children: [
-                Icon(Icons.emoji_events,
-                    size: 80, color: Colors.amber.shade400),
+                Icon(Icons.emoji_events, size: 80, color: colors.primary),
                 const SizedBox(height: 16),
                 Text(
                   victoryMessage,
                   style: TextStyle(
-                    color: Colors.amber.shade400,
+                    color: colors.primary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -377,8 +405,8 @@ Manos jugadas: ${game.rounds.length}
               children: [
                 Text(
                   'Ganador: ${game.winner}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.onSurface,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -388,9 +416,9 @@ Manos jugadas: ${game.rounds.length}
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: colors.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white24),
+                    border: Border.all(color: colors.outlineVariant),
                   ),
                   child: Column(
                     children: [
@@ -398,8 +426,8 @@ Manos jugadas: ${game.rounds.length}
                         '${game.team1Name}: ${game.team1Score}',
                         style: TextStyle(
                           color: game.team1Score >= 100
-                              ? Colors.green
-                              : Colors.white,
+                              ? successColor
+                              : colors.onSurface,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -409,8 +437,8 @@ Manos jugadas: ${game.rounds.length}
                         '${game.team2Name}: ${game.team2Score}',
                         style: TextStyle(
                           color: game.team2Score >= 100
-                              ? Colors.green
-                              : Colors.white,
+                              ? successColor
+                              : colors.onSurface,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -424,15 +452,15 @@ Manos jugadas: ${game.rounds.length}
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.1),
+                    color: colors.primaryContainer.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(8),
                     border:
-                        Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                        Border.all(color: colors.primary.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     'Partidas: ${provider.team1Wins} - ${provider.team2Wins}',
                     style: TextStyle(
-                      color: Colors.amber.shade300,
+                      color: colors.onPrimaryContainer,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -441,27 +469,22 @@ Manos jugadas: ${game.rounds.length}
                 const SizedBox(height: 12),
                 TextButton.icon(
                   onPressed: () => _shareResult(asImage: false),
-                  icon: const Icon(Icons.share, color: Colors.white70),
-                  label: const Text(
+                  icon: Icon(Icons.share, color: colors.onSurfaceVariant),
+                  label: Text(
                     'Compartir resultado',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: colors.onSurfaceVariant),
                   ),
                 ),
               ],
             ),
             actions: [
               OutlinedButton(
-                onPressed: () async {
-                  final navigator = Navigator.of(context);
-                  await provider.startRevancha();
-                  _victoryShown = false;
-                  navigator.pop();
-                },
+                onPressed: () => _openRematchOrder(game, context),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white),
+                  foregroundColor: colors.primary,
+                  side: BorderSide(color: colors.primary),
                 ),
-                child: const Text('Revancha'),
+                child: const Text('Revancha · elegir salida'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -476,8 +499,8 @@ Manos jugadas: ${game.rounds.length}
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                 ),
                 child: const Text('Nueva Partida'),
               ),
@@ -517,11 +540,11 @@ Manos jugadas: ${game.rounds.length}
           return const TeamSetupScreen();
         }
 
-        final team1Winning = game.team1Score > 75;
-        final team2Winning = game.team2Score > 75;
+        final team1Winning = game.team1Score >= 75;
+        final team2Winning = game.team2Score >= 75;
+        final colors = Theme.of(context).colorScheme;
 
         return Scaffold(
-          backgroundColor: Colors.black,
           body: SafeArea(
             child: Column(
               children: [
@@ -540,7 +563,7 @@ Manos jugadas: ${game.rounds.length}
                                 t.isDark
                                     ? Icons.light_mode
                                     : Icons.dark_mode,
-                                color: Colors.white70,
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -549,14 +572,14 @@ Manos jugadas: ${game.rounds.length}
                               onTap: _handleLogoLongPress,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
+                                children: [
                                   Icon(Icons.casino,
-                                      color: Colors.white, size: 24),
-                                  SizedBox(width: 8),
+                                      color: colors.primary, size: 24),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'LA LIBRETA',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: colors.onSurface,
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 2,
@@ -569,8 +592,8 @@ Manos jugadas: ${game.rounds.length}
                           IconButton(
                             tooltip: 'Compartir',
                             onPressed: () => _shareResult(asImage: true),
-                            icon: const Icon(Icons.ios_share,
-                                color: Colors.white70),
+                            icon: Icon(Icons.ios_share,
+                                color: colors.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -585,16 +608,17 @@ Manos jugadas: ${game.rounds.length}
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.12),
+                              color: colors.primaryContainer
+                                  .withValues(alpha: 0.65),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                   color:
-                                      Colors.amber.withValues(alpha: 0.4)),
+                                      colors.primary.withValues(alpha: 0.4)),
                             ),
                             child: Text(
                               'Partidas: ${provider.team1Wins} - ${provider.team2Wins}',
                               style: TextStyle(
-                                color: Colors.amber.shade300,
+                                color: colors.onPrimaryContainer,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,
@@ -644,10 +668,10 @@ Manos jugadas: ${game.rounds.length}
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
+                        color: colors.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(16),
                         border:
-                            Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                            Border.all(color: colors.outlineVariant),
                       ),
                       child: game.rounds.isEmpty
                           ? Center(
@@ -657,14 +681,13 @@ Manos jugadas: ${game.rounds.length}
                                   Icon(
                                     Icons.edit_note,
                                     size: 64,
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                    color: colors.onSurface.withValues(alpha: 0.3),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
                                     'La libreta está vacía\n¡Anota la primera mano!',
                                     style: TextStyle(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.5),
+                                      color: colors.onSurfaceVariant,
                                       fontSize: 16,
                                     ),
                                     textAlign: TextAlign.center,
@@ -705,10 +728,10 @@ Manos jugadas: ${game.rounds.length}
           bottomNavigationBar: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: colors.surfaceContainer,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: colors.shadow.withValues(alpha: 0.18),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -727,10 +750,11 @@ Manos jugadas: ${game.rounds.length}
                       icon: const Icon(Icons.undo),
                       label: const Text('Borrar última'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white24),
+                        foregroundColor: colors.onSurface,
+                        side: BorderSide(color: colors.outlineVariant),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        disabledForegroundColor: Colors.white24,
+                        disabledForegroundColor:
+                            colors.onSurface.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
@@ -741,21 +765,20 @@ Manos jugadas: ${game.rounds.length}
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: const Color(0xFF1A1A1A),
-                            title: const Text(
+                            title: Text(
                               '¿Nueva Partida?',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: colors.onSurface),
                             ),
-                            content: const Text(
+                            content: Text(
                               'Se perderá el progreso actual.',
-                              style: TextStyle(color: Colors.white70),
+                              style: TextStyle(color: colors.onSurfaceVariant),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text(
+                                child: Text(
                                   'Cancelar',
-                                  style: TextStyle(color: Colors.white70),
+                                  style: TextStyle(color: colors.onSurfaceVariant),
                                 ),
                               ),
                               ElevatedButton(
@@ -772,8 +795,8 @@ Manos jugadas: ${game.rounds.length}
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
+                                  backgroundColor: colors.primary,
+                                  foregroundColor: colors.onPrimary,
                                 ),
                                 child: const Text('Nueva Partida'),
                               ),
@@ -784,8 +807,8 @@ Manos jugadas: ${game.rounds.length}
                       icon: const Icon(Icons.refresh),
                       label: const Text('Nueva Partida'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
@@ -800,12 +823,13 @@ Manos jugadas: ${game.rounds.length}
   }
 
   Widget _buildTurnOrderStrip(Game game) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -815,7 +839,7 @@ Manos jugadas: ${game.rounds.length}
             if (i < 3)
               Icon(
                 Icons.chevron_right,
-                color: Colors.white.withValues(alpha: 0.3),
+                color: colors.onSurface.withValues(alpha: 0.3),
                 size: 16,
               ),
           ],
@@ -825,11 +849,12 @@ Manos jugadas: ${game.rounds.length}
   }
 
   Widget _buildTurnSlot(Game game, int orderIndex) {
+    final colors = Theme.of(context).colorScheme;
     final isCurrent = orderIndex == game.currentTurnIndex;
     final teamIndex = game.teamIndexAt(orderIndex);
     final teamColor = teamIndex == 0
-        ? Colors.lightBlue.shade300
-        : Colors.orange.shade300;
+        ? colors.primary
+        : colors.tertiary;
     final name = game.playerNameAt(orderIndex);
     final positionLabel = ['1º', '2º', '3º', '4º'][orderIndex];
 
@@ -837,13 +862,13 @@ Manos jugadas: ${game.rounds.length}
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       decoration: BoxDecoration(
         color: isCurrent
-            ? Colors.amber.withValues(alpha: 0.15)
+            ? colors.primaryContainer.withValues(alpha: 0.7)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isCurrent
-              ? Colors.amber
-              : Colors.white.withValues(alpha: 0.05),
+              ? colors.primary
+              : colors.outlineVariant,
           width: isCurrent ? 1.5 : 1,
         ),
       ),
@@ -853,7 +878,7 @@ Manos jugadas: ${game.rounds.length}
           Text(
             positionLabel,
             style: TextStyle(
-              color: isCurrent ? Colors.amber : Colors.white54,
+              color: isCurrent ? colors.primary : colors.onSurfaceVariant,
               fontSize: 9,
               fontWeight: FontWeight.bold,
               letterSpacing: 1,
@@ -866,7 +891,7 @@ Manos jugadas: ${game.rounds.length}
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isCurrent ? Colors.white : teamColor,
+              color: isCurrent ? colors.onSurface : teamColor,
               fontSize: 11,
               fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
             ),
@@ -882,17 +907,19 @@ Manos jugadas: ${game.rounds.length}
     bool winning,
     int teamIndex,
   ) {
+    final colors = Theme.of(context).colorScheme;
+    final successColor = _successColor;
     return GestureDetector(
       onTap: () => _showAddPointsDialog(teamIndex),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: winning
-              ? Colors.green.withValues(alpha: 0.1)
-              : Colors.white.withValues(alpha: 0.05),
+              ? successColor.withValues(alpha: 0.1)
+              : colors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: winning ? Colors.green : Colors.white24,
+            color: winning ? successColor : colors.outlineVariant,
             width: 2,
           ),
         ),
@@ -901,7 +928,7 @@ Manos jugadas: ${game.rounds.length}
             Text(
               teamName.toUpperCase(),
               style: TextStyle(
-                color: winning ? Colors.green.shade300 : Colors.white,
+                color: winning ? successColor : colors.onSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1,
@@ -914,7 +941,7 @@ Manos jugadas: ${game.rounds.length}
             Text(
               '$score',
               style: TextStyle(
-                color: winning ? Colors.green : Colors.white,
+                color: winning ? successColor : colors.onSurface,
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
                 height: 1,
@@ -924,16 +951,16 @@ Manos jugadas: ${game.rounds.length}
             Text(
               'pts',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: colors.onSurfaceVariant,
                 fontSize: 10,
               ),
             ),
             const SizedBox(height: 8),
             LinearProgressIndicator(
               value: (score / 100).clamp(0.0, 1.0),
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              backgroundColor: colors.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(
-                winning ? Colors.green : Colors.white,
+                winning ? successColor : colors.primary,
               ),
             ),
           ],
@@ -948,14 +975,17 @@ Manos jugadas: ${game.rounds.length}
     String losingTeamName,
     String winningTeamName,
   ) {
+    final colors = Theme.of(context).colorScheme;
+    final successColor = _successColor;
+    final dangerColor = _dangerColor;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: colors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: colors.outlineVariant,
           width: 1.5,
         ),
       ),
@@ -968,25 +998,25 @@ Manos jugadas: ${game.rounds.length}
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white24, width: 2),
+                  border: Border.all(color: colors.outlineVariant, width: 2),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       '$manoNumber',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.onSurface,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'M',
                       style: TextStyle(
-                        color: Colors.white54,
+                        color: colors.onSurfaceVariant,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1002,13 +1032,13 @@ Manos jugadas: ${game.rounds.length}
                     Row(
                       children: [
                         Icon(Icons.emoji_events,
-                            color: Colors.green.shade300, size: 16),
+                            color: successColor, size: 16),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             winningTeamName,
                             style: TextStyle(
-                              color: Colors.green.shade300,
+                              color: successColor,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1021,14 +1051,13 @@ Manos jugadas: ${game.rounds.length}
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.close,
-                            color: Colors.red.shade300, size: 16),
+                        Icon(Icons.close, color: dangerColor, size: 16),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             losingTeamName,
                             style: TextStyle(
-                              color: Colors.red.shade300,
+                              color: dangerColor,
                               fontSize: 14,
                             ),
                             maxLines: 1,
@@ -1044,10 +1073,10 @@ Manos jugadas: ${game.rounds.length}
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.2),
+                  color: successColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.green.withValues(alpha: 0.3),
+                    color: successColor.withValues(alpha: 0.35),
                     width: 1.5,
                   ),
                 ),
@@ -1056,7 +1085,7 @@ Manos jugadas: ${game.rounds.length}
                     Text(
                       '+${round.points}',
                       style: TextStyle(
-                        color: Colors.green.shade300,
+                        color: successColor,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1070,7 +1099,7 @@ Manos jugadas: ${game.rounds.length}
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
+              color: colors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -1079,7 +1108,7 @@ Manos jugadas: ${game.rounds.length}
                 Text(
                   '${round.team1Total}',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: colors.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1087,14 +1116,14 @@ Manos jugadas: ${game.rounds.length}
                 Text(
                   '-',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.3),
+                    color: colors.onSurfaceVariant,
                     fontSize: 16,
                   ),
                 ),
                 Text(
                   '${round.team2Total}',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: colors.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),

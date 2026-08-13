@@ -26,8 +26,8 @@ class _EasterEggScreenState extends State<EasterEggScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.black,
       body: Stack(
         children: [
           // Confetti
@@ -59,20 +59,20 @@ class _EasterEggScreenState extends State<EasterEggScreen> {
                     color: Colors.amber,
                   ),
                   const SizedBox(height: 40),
-                  const Text(
+                  Text(
                     'Esta app fue creada por',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.onSurface,
                       fontSize: 22,
                       fontWeight: FontWeight.w300,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Cristofer Correia',
                     style: TextStyle(
-                      color: Colors.amber,
+                      color: colors.primary,
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
@@ -85,18 +85,18 @@ class _EasterEggScreenState extends State<EasterEggScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.red.withValues(alpha: 0.3),
-                          Colors.yellow.withValues(alpha: 0.3),
-                          Colors.blue.withValues(alpha: 0.3),
+                          colors.errorContainer,
+                          colors.primaryContainer,
+                          colors.tertiaryContainer,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white24, width: 2),
+                      border: Border.all(color: colors.outlineVariant, width: 2),
                     ),
-                    child: const Text(
+                    child: Text(
                       'el mejor jugador de dominó\nde Venezuela 🏆\n...y probablemente del mundo.',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.onSurface,
                         fontSize: 20,
                         fontWeight: FontWeight.w400,
                         height: 1.5,
@@ -118,10 +118,10 @@ class _EasterEggScreenState extends State<EasterEggScreen> {
                   const SizedBox(height: 60),
                   TextButton.icon(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    label: const Text(
+                    icon: Icon(Icons.arrow_back, color: colors.onSurface),
+                    label: Text(
                       'Volver',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                      style: TextStyle(color: colors.onSurface, fontSize: 18),
                     ),
                   ),
                 ],
@@ -134,17 +134,18 @@ class _EasterEggScreenState extends State<EasterEggScreen> {
   }
 
   Widget _buildBadge(String text) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.amber, width: 2),
+        border: Border.all(color: colors.primary, width: 2),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.amber,
+        style: TextStyle(
+          color: colors.primary,
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),

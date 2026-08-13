@@ -122,6 +122,29 @@ class Game {
   }
 
   factory Game.fromJson(Map<String, dynamic> json) {
+    final rawOrder = json['playingOrder'];
+    final parsedOrder = rawOrder is List<dynamic>
+        ? rawOrder.whereType<int>().toList(growable: false)
+        : const <int>[];
+    final hasValidPlayers = parsedOrder.length == 4 &&
+        parsedOrder.toSet().length == 4 &&
+        parsedOrder.every((id) => id >= 0 && id <= 3);
+    final alternatesTeams = hasValidPlayers &&
+        List.generate(4, (index) {
+          final currentTeam = parsedOrder[index] < 2 ? 0 : 1;
+          final nextTeam = parsedOrder[(index + 1) % 4] < 2 ? 0 : 1;
+          return currentTeam != nextTeam;
+        }).every((isValid) => isValid);
+    final playingOrder = alternatesTeams
+        ? parsedOrder
+        : const <int>[0, 2, 1, 3];
+    final rawTurnIndex = json['currentTurnIndex'];
+    final currentTurnIndex = rawTurnIndex is int &&
+            rawTurnIndex >= 0 &&
+            rawTurnIndex < playingOrder.length
+        ? rawTurnIndex
+        : 0;
+
     return Game(
       team1Name: json['team1Name'] as String,
       team2Name: json['team2Name'] as String,
@@ -132,10 +155,8 @@ class Game {
       rounds: (json['rounds'] as List<dynamic>)
           .map((r) => Round.fromJson(r as Map<String, dynamic>))
           .toList(),
-      playingOrder: (json['playingOrder'] as List<dynamic>)
-          .map((e) => e as int)
-          .toList(),
-      currentTurnIndex: json['currentTurnIndex'] as int? ?? 0,
+      playingOrder: playingOrder,
+      currentTurnIndex: currentTurnIndex,
     );
   }
 }

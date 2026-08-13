@@ -9,6 +9,53 @@ void main() {
   runApp(const DominoVenezolanoApp());
 }
 
+ThemeData _buildTheme(Brightness brightness) {
+  final isDark = brightness == Brightness.dark;
+  final scheme = ColorScheme.fromSeed(
+    seedColor: const Color(0xFFFFB300),
+    brightness: brightness,
+    surface: isDark ? const Color(0xFF111111) : const Color(0xFFFFFBF3),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: brightness,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: scheme.surface,
+    fontFamily: 'Roboto',
+    appBarTheme: AppBarThemeData(
+      backgroundColor: scheme.surface,
+      foregroundColor: scheme.onSurface,
+      elevation: 0,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: scheme.surfaceContainerHigh,
+      titleTextStyle: TextStyle(
+        color: scheme.onSurface,
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+      ),
+      contentTextStyle: TextStyle(color: scheme.onSurfaceVariant),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: scheme.primary, width: 2),
+      ),
+    ),
+  );
+}
+
 class DominoVenezolanoApp extends StatelessWidget {
   const DominoVenezolanoApp({super.key});
 
@@ -29,34 +76,8 @@ class DominoVenezolanoApp extends StatelessWidget {
             title: 'Domino Venezolano',
             debugShowCheckedModeBanner: false,
             themeMode: themeProv.mode,
-            theme: ThemeData(
-              brightness: Brightness.light,
-              primarySwatch: Colors.amber,
-              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-              fontFamily: 'Roboto',
-            ),
-            darkTheme: ThemeData(
-              brightness: Brightness.dark,
-              primarySwatch: Colors.grey,
-              scaffoldBackgroundColor: Colors.black,
-              fontFamily: 'Roboto',
-              textTheme: const TextTheme(
-                displayLarge: TextStyle(
-                  fontSize: 72,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                displayMedium: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                bodyLarge: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            theme: _buildTheme(Brightness.light),
+            darkTheme: _buildTheme(Brightness.dark),
             home: const _RootRouter(),
           );
         },
@@ -71,8 +92,13 @@ class _RootRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, provider, _) {
+    return Consumer2<GameProvider, ThemeProvider>(
+      builder: (context, provider, theme, _) {
+        if (provider.isRestoring || theme.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         if (provider.hasGame) {
           return const GameScreen();
         }

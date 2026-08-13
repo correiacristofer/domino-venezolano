@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../providers/theme_provider.dart';
 import 'turn_order_screen.dart';
 
 class TeamSetupScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
   Future<void> _loadLastTeamNames() async {
     final provider = Provider.of<GameProvider>(context, listen: false);
     final lastNames = await provider.getLastTeamNames();
+    if (!mounted) return;
     if (lastNames['team1']!.isNotEmpty) {
       _team1Controller.text = lastNames['team1']!;
     }
@@ -81,9 +83,9 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<GameProvider>(context);
     final randomPhrase = provider.getRandomPhrase();
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.black,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -92,19 +94,31 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Consumer<ThemeProvider>(
+                    builder: (context, theme, _) => IconButton(
+                      tooltip: theme.isDark ? 'Usar tema claro' : 'Usar tema oscuro',
+                      onPressed: theme.toggle,
+                      icon: Icon(
+                        theme.isDark ? Icons.light_mode : Icons.dark_mode,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
                 
                 // App Title
-                const Icon(
+                Icon(
                   Icons.casino,
                   size: 80,
-                  color: Colors.white,
+                  color: colors.primary,
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'DOMINO VENEZOLANO',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.onSurface,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2.5,
@@ -118,14 +132,14 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: colors.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white24, width: 1),
+                    border: Border.all(color: colors.outlineVariant, width: 1),
                   ),
                   child: Text(
                     randomPhrase,
                     style: TextStyle(
-                      color: Colors.amber.shade300,
+                      color: colors.primary,
                       fontSize: 18,
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w500,
@@ -137,10 +151,10 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                 const SizedBox(height: 40),
                 
                 // TEAM 1
-                const Text(
+                Text(
                   'EQUIPO 1',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
@@ -183,10 +197,10 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                 const SizedBox(height: 32),
                 
                 // TEAM 2
-                const Text(
+                Text(
                   'EQUIPO 2',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
@@ -232,8 +246,8 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                 ElevatedButton(
                   onPressed: _continueToTurnOrder,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -256,22 +270,22 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: colors.tertiaryContainer.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green.withValues(alpha: 0.3), width: 1),
+                    border: Border.all(color: colors.tertiary.withValues(alpha: 0.45), width: 1),
                   ),
                   child: Column(
                     children: [
                       Icon(
                         Icons.emoji_events,
-                        color: Colors.green.shade300,
+                        color: colors.onTertiaryContainer,
                         size: 28,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'El primer equipo que llegue a 100 puntos GANA',
                         style: TextStyle(
-                          color: Colors.green.shade300,
+                          color: colors.onTertiaryContainer,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -281,7 +295,7 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                       Text(
                         'Solo se cuentan las fichas del equipo PERDEDOR 🐷',
                         style: TextStyle(
-                          color: Colors.amber.shade300,
+                          color: colors.onTertiaryContainer,
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
                         ),
@@ -303,26 +317,13 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
     required String hint,
     String? Function(String?)? validator,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white, fontSize: 18),
+      style: TextStyle(color: colors.onSurface, fontSize: 18),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 16),
-        filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white24),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white24),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white, width: 2),
-        ),
+        hintStyle: TextStyle(color: colors.onSurfaceVariant, fontSize: 16),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       validator: validator,

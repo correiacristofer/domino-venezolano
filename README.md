@@ -25,7 +25,7 @@ Una app minimalista para llevar la cuenta del **dominó criollo** (estilo venezo
 ## ✨ Características
 
 - 🎯 **Marcador automático** — anota la mano y la app calcula puntos del perdedor
-- 🔄 **Orden de juego inteligente** — define el turno con validación criolla (no pueden ir dos del mismo equipo seguidos)
+- 🔄 **Mesa visual inteligente** — ubica a cada jugador y la app sienta automáticamente a su compañero al frente
 - 📋 **La Libreta** — historial completo de manos con totales acumulados
 - 🏆 **Marcador de revanchas** — ¿2-1? ¿3-2? La app te recuerda quién manda
 - 💾 **Persistencia** — cierra la app, vuelve mañana, sigues donde quedaste
@@ -96,7 +96,7 @@ lib/
 1. Ganan el primer equipo en llegar a **100 puntos**
 2. **Solo se cuentan las fichas del equipo perdedor** (suma 0–84)
 3. El orden de juego no permite **dos jugadores del mismo equipo consecutivos**
-4. Al ganar puedes pedir **revancha** (mismo orden) o **nueva partida** (resetea todo)
+4. Al ganar puedes pedir **revancha**, reconfigurar quién sale y conservar el marcador de partidas; una **nueva partida** resetea todo
 
 ## 🛣️ Roadmap
 

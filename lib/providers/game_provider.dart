@@ -9,6 +9,7 @@ import '../utils/venezuelan_phrases.dart';
 class GameProvider extends ChangeNotifier {
   Game? _currentGame;
   bool _isProcessing = false;
+  bool _isRestoring = true;
 
   // Match scoreboard (revanchas)
   int _team1Wins = 0;
@@ -17,6 +18,7 @@ class GameProvider extends ChangeNotifier {
   Game? get currentGame => _currentGame;
   bool get hasGame => _currentGame != null;
   bool get isProcessing => _isProcessing;
+  bool get isRestoring => _isRestoring;
   int get team1Wins => _team1Wins;
   int get team2Wins => _team2Wins;
 
@@ -36,6 +38,7 @@ class GameProvider extends ChangeNotifier {
     required String team2Player2,
     required List<int> playingOrder,
   }) async {
+    _isProcessing = false;
     _currentGame = Game(
       team1Name: team1Name,
       team2Name: team2Name,
@@ -43,7 +46,7 @@ class GameProvider extends ChangeNotifier {
       team1Player2: team1Player2,
       team2Player1: team2Player1,
       team2Player2: team2Player2,
-      playingOrder: playingOrder,
+      playingOrder: List<int>.from(playingOrder),
       currentTurnIndex: 0,
     );
 
@@ -63,9 +66,10 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> startRevancha() async {
+  Future<void> startRevancha({List<int>? playingOrder}) async {
     if (_currentGame == null) return;
 
+    _isProcessing = false;
     _currentGame = Game(
       team1Name: _currentGame!.team1Name,
       team2Name: _currentGame!.team2Name,
@@ -73,7 +77,9 @@ class GameProvider extends ChangeNotifier {
       team1Player2: _currentGame!.team1Player2,
       team2Player1: _currentGame!.team2Player1,
       team2Player2: _currentGame!.team2Player2,
-      playingOrder: _currentGame!.playingOrder,
+      playingOrder: List<int>.from(
+        playingOrder ?? _currentGame!.playingOrder,
+      ),
       currentTurnIndex: 0,
     );
 
@@ -82,7 +88,15 @@ class GameProvider extends ChangeNotifier {
   }
 
   void addMano(int losingTeamIndex, int points, {bool isTranca = false}) {
-    if (_currentGame == null || _isProcessing) return;
+    if (_currentGame == null ||
+        _currentGame!.isGameOver ||
+        _isProcessing ||
+        losingTeamIndex < 0 ||
+        losingTeamIndex > 1 ||
+        points < 0 ||
+        points > 84) {
+      return;
+    }
 
     _isProcessing = true;
     notifyListeners();
@@ -222,11 +236,20 @@ class GameProvider extends ChangeNotifier {
       if (raw == null) return false;
       final map = jsonDecode(raw) as Map<String, dynamic>;
       _currentGame = Game.fromJson(map);
-      notifyListeners();
       return true;
     } catch (e) {
       debugPrint('Failed to restore game: $e');
+      _currentGame = null;
+      _team1Wins = 0;
+      _team2Wins = 0;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('saved_game');
+      await prefs.remove('saved_team1_wins');
+      await prefs.remove('saved_team2_wins');
       return false;
+    } finally {
+      _isRestoring = false;
+      notifyListeners();
     }
   }
 }
