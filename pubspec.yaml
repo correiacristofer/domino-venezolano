@@ -45,9 +45,6 @@ dependencies:
   # Share game results (uses Android share Intent under the hood)
   share_plus: ^10.1.4
 
-  # Lightweight sound effects
-  audioplayers: ^6.1.0
-
   # Capture libreta as image to share
   screenshot: ^3.0.0
   path_provider: ^2.1.5

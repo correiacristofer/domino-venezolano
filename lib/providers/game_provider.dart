@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +9,6 @@ import '../utils/venezuelan_phrases.dart';
 
 class GameProvider extends ChangeNotifier {
   Game? _currentGame;
-  bool _isProcessing = false;
   bool _isRestoring = true;
 
   // Match scoreboard (revanchas)
@@ -17,7 +17,6 @@ class GameProvider extends ChangeNotifier {
 
   Game? get currentGame => _currentGame;
   bool get hasGame => _currentGame != null;
-  bool get isProcessing => _isProcessing;
   bool get isRestoring => _isRestoring;
   int get team1Wins => _team1Wins;
   int get team2Wins => _team2Wins;
@@ -26,6 +25,7 @@ class GameProvider extends ChangeNotifier {
   String getRandomPhrase() => VenezuelanPhrases.getRandomSplash();
   String getRandomVictory() => VenezuelanPhrases.getVictoryPhrase();
   String getManoPhrase(int points) => VenezuelanPhrases.getManoPhrase(points);
+  String getTrancaPhrase() => VenezuelanPhrases.getTrancaPhrase();
   String getCloseToWinPhrase() => VenezuelanPhrases.getCloseToWinPhrase();
   String getLosingBigPhrase() => VenezuelanPhrases.getLosingBigPhrase();
 
@@ -38,7 +38,6 @@ class GameProvider extends ChangeNotifier {
     required String team2Player2,
     required List<int> playingOrder,
   }) async {
-    _isProcessing = false;
     _currentGame = Game(
       team1Name: team1Name,
       team2Name: team2Name,
@@ -69,7 +68,6 @@ class GameProvider extends ChangeNotifier {
   Future<void> startRevancha({List<int>? playingOrder}) async {
     if (_currentGame == null) return;
 
-    _isProcessing = false;
     _currentGame = Game(
       team1Name: _currentGame!.team1Name,
       team2Name: _currentGame!.team2Name,
@@ -87,19 +85,18 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addMano(int losingTeamIndex, int points, {bool isTranca = false}) {
+  /// Records a mano. Returns false when it was rejected (no game, partida
+  /// already over or invalid input) so the UI never celebrates a mano that
+  /// was not saved.
+  bool addMano(int losingTeamIndex, int points, {bool isTranca = false}) {
     if (_currentGame == null ||
         _currentGame!.isGameOver ||
-        _isProcessing ||
         losingTeamIndex < 0 ||
         losingTeamIndex > 1 ||
         points < 0 ||
-        points > 84) {
-      return;
+        points > Game.maxManoPoints) {
+      return false;
     }
-
-    _isProcessing = true;
-    notifyListeners();
 
     // Haptic feedback when a mano is anotated
     HapticFeedback.mediumImpact();
@@ -132,8 +129,9 @@ class GameProvider extends ChangeNotifier {
     );
 
     // If victory triggered now, register match win and stronger haptic
-    if (_currentGame!.isGameOver) {
-      if (_currentGame!.team1Score >= 100) {
+    final winner = _currentGame!.winningTeamIndex;
+    if (winner != null) {
+      if (winner == 0) {
         _team1Wins++;
       } else {
         _team2Wins++;
@@ -141,24 +139,17 @@ class GameProvider extends ChangeNotifier {
       HapticFeedback.heavyImpact();
     }
 
-    _persistCurrentGame();
-
-    Future.delayed(const Duration(seconds: 1), () {
-      _isProcessing = false;
-      notifyListeners();
-    });
-
+    unawaited(_persistCurrentGame());
     notifyListeners();
+    return true;
   }
 
   void undoLastMano() {
-    if (_currentGame == null ||
-        _currentGame!.rounds.isEmpty ||
-        _isProcessing) {
+    if (_currentGame == null || _currentGame!.rounds.isEmpty) {
       return;
     }
 
-    final wasGameOver = _currentGame!.isGameOver;
+    final previousWinner = _currentGame!.winningTeamIndex;
 
     final rounds = List<Round>.from(_currentGame!.rounds);
     rounds.removeLast();
@@ -171,23 +162,22 @@ class GameProvider extends ChangeNotifier {
     );
 
     // If we are undoing the winning mano, roll back the match scoreboard
-    if (wasGameOver && !updated.isGameOver) {
-      if (_currentGame!.team1Score >= 100 && _team1Wins > 0) {
+    if (previousWinner != null && !updated.isGameOver) {
+      if (previousWinner == 0 && _team1Wins > 0) {
         _team1Wins--;
-      } else if (_currentGame!.team2Score >= 100 && _team2Wins > 0) {
+      } else if (previousWinner == 1 && _team2Wins > 0) {
         _team2Wins--;
       }
     }
 
     _currentGame = updated;
     HapticFeedback.lightImpact();
-    _persistCurrentGame();
+    unawaited(_persistCurrentGame());
     notifyListeners();
   }
 
   Future<void> resetGame() async {
     _currentGame = null;
-    _isProcessing = false;
     _team1Wins = 0;
     _team2Wins = 0;
     final prefs = await SharedPreferences.getInstance();
