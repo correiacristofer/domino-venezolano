@@ -57,7 +57,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: android-${{ env.HAS_KEY == 'true' && env.IS_RELEASE == 'true' && 'firmado' || 'sin-firmar' }}
+          name: android-${{ env.HAS_KEY == 'true' && env.IS_RELEASE == 'true' && 'firmado' || 'firma-debug' }}
           path: |
             build/app/outputs/bundle/release/app-release.aab
             build/app/outputs/flutter-apk/app-release.apk
