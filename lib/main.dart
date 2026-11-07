@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/game_provider.dart';
 import 'providers/theme_provider.dart';
@@ -9,7 +10,8 @@ void main() {
   runApp(const DominoVenezolanoApp());
 }
 
-ThemeData _buildTheme(Brightness brightness) {
+/// App theme, also used to render store screenshots.
+ThemeData buildAppTheme(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   final scheme = ColorScheme.fromSeed(
     seedColor: const Color(0xFFFFB300),
@@ -30,12 +32,18 @@ ThemeData _buildTheme(Brightness brightness) {
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: scheme.surfaceContainerHigh,
+      // Dialog styles replace the ambient text style, so they need the
+      // family too or dialogs fall back to a different font.
       titleTextStyle: TextStyle(
+        fontFamily: 'Roboto',
         color: scheme.onSurface,
         fontSize: 22,
         fontWeight: FontWeight.bold,
       ),
-      contentTextStyle: TextStyle(color: scheme.onSurfaceVariant),
+      contentTextStyle: TextStyle(
+        fontFamily: 'Roboto',
+        color: scheme.onSurfaceVariant,
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -75,9 +83,12 @@ class DominoVenezolanoApp extends StatelessWidget {
           return MaterialApp(
             title: 'Domino Venezolano',
             debugShowCheckedModeBanner: false,
+            locale: const Locale('es'),
+            supportedLocales: const [Locale('es')],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
             themeMode: themeProv.mode,
-            theme: _buildTheme(Brightness.light),
-            darkTheme: _buildTheme(Brightness.dark),
+            theme: buildAppTheme(Brightness.light),
+            darkTheme: buildAppTheme(Brightness.dark),
             home: const _RootRouter(),
           );
         },
