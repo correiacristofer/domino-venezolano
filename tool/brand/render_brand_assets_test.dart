@@ -71,7 +71,10 @@ void main() {
           BrandBackground.none, 0.62);
     }
 
-    // Web / PWA.
+    // Web / PWA. iOS masks the home screen icon itself, so it gets a
+    // full-bleed square like the native app icon.
+    await icon('web/icons/apple-touch-icon.png', 180, BrandBackground.square,
+        0.95);
     await icon('web/favicon.png', 32, BrandBackground.roundedSquare, 0.9);
     await icon('web/icons/Icon-192.png', 192, BrandBackground.roundedSquare,
         0.9);

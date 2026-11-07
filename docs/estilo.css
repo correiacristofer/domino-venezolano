@@ -37,3 +37,30 @@ p, li { color: var(--text); }
   border-radius: 14px; padding: 16px 20px; }
 a { color: var(--accent); }
 nav { margin-top: 40px; display: flex; gap: 20px; flex-wrap: wrap; }
+ol { padding-left: 1.3rem; }
+ol li { margin-bottom: .4rem; }
+
+.buttons { display: grid; gap: 12px; margin: 24px 0; }
+@media (min-width: 560px) { .buttons { grid-template-columns: 1fr 1fr; } }
+.btn {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 18px; border-radius: 14px; text-decoration: none;
+  font-weight: 700; font-size: 1.05rem;
+  color: var(--text); background: var(--card); border: 1px solid var(--border);
+}
+.btn small { font-weight: 400; font-size: .85rem; color: var(--muted); }
+.btn-primary { background: #7a5600; border-color: #7a5600; color: #fff; }
+.btn-primary small { color: #f3e3bd; }
+@media (prefers-color-scheme: dark) {
+  .btn-primary { background: #ffcc00; border-color: #ffcc00; color: #111; }
+  .btn-primary small { color: #3d3000; }
+}
+
+.shots {
+  display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+.shots img {
+  width: 200px; height: auto; flex: none; border-radius: 14px;
+  border: 1px solid var(--border); scroll-snap-align: start;
+}

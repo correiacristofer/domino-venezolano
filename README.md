@@ -4,8 +4,8 @@
 
 ### *La libreta digital del dominó venezolano*
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.35.4-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.9.2-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.47.9-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.13.7-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Web-lightgrey)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made in Venezuela](https://img.shields.io/badge/Made%20in-Venezuela%20🇻🇪-FFCC00?labelColor=003893)]()
@@ -48,13 +48,15 @@ Una app minimalista para llevar la cuenta del **dominó criollo** (estilo venezo
 ## 🚀 Instalación
 
 ### Como usuario
-- Descarga el APK desde la pestaña [Releases](../../releases) e instálalo en tu Android
-- O accede a la versión web (próximamente)
+Todo desde la página de descarga: **https://correiacristofer.github.io/domino-venezolano/**
+
+- **Android:** descarga el APK (última versión en [Releases](../../releases)) e instálalo.
+- **iPhone:** abre la versión web en Safari y usa «Añadir a pantalla de inicio».
 
 ### Como desarrollador
 
 ```bash
-# Requiere Flutter 3.35.4 / Dart 3.9.2
+# Requiere Flutter 3.47.9
 git clone https://github.com/correiacristofer/domino-venezolano.git
 cd domino-venezolano
 flutter pub get
