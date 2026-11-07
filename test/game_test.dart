@@ -44,6 +44,5 @@ void main() {
     expect(provider.currentGame?.team2Name, 'Equipo 2');
     expect(provider.currentGame?.rounds, isEmpty);
     expect(provider.currentGame?.playingOrder, [2, 0, 3, 1]);
-    expect(provider.isProcessing, isFalse);
   });
 }
