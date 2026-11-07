@@ -22,9 +22,9 @@ jobs:
     env:
       HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -55,7 +55,7 @@ jobs:
       - run: flutter build appbundle --release --build-number=${{ github.run_number }}
       - run: flutter build apk --release --build-number=${{ github.run_number }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: android-${{ env.HAS_KEY == 'true' && env.IS_RELEASE == 'true' && 'firmado' || 'firma-debug' }}
           path: |
@@ -68,7 +68,7 @@ jobs:
     env:
       HAS_ASC_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # App Store Connect only accepts builds made with Xcode 26 or later.
       - uses: maxim-lobanov/setup-xcode@v1
