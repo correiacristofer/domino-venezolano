@@ -14,6 +14,20 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
+// The release APK (flutter build apk) is what GitHub Releases publishes and
+// people download straight to the phone, often on mobile data. Two changes
+// cut the download from 51 MB to about 16 MB and keep a single APK for every
+// phone:
+// - native libraries compressed inside the APK (Android unpacks them when
+//   installing, so the space used on the phone also drops);
+// - no x86_64 code: phones never used it with Android 7+, and the few Intel
+//   Chromebooks run ARM apps through translation.
+// Debug builds (emulators) and the Play bundle (flutter build appbundle, which
+// Play splits per device) keep the defaults.
+val sideload = gradle.startParameter.taskNames.any {
+    it.contains("assembleRelease", ignoreCase = true)
+}
+
 android {
     namespace = "com.correiacristofer.dominovenezolano"
     compileSdk = flutter.compileSdkVersion
@@ -30,6 +44,20 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        if (sideload) {
+            ndk {
+                abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            }
+        }
+    }
+
+    if (sideload) {
+        packaging {
+            jniLibs {
+                useLegacyPackaging = true
+            }
+        }
     }
 
     signingConfigs {
