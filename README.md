@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎲 Domino Duel
+# 🎲 Domino Venezolano
 
 ### *La libreta digital del dominó venezolano*
 
@@ -16,7 +16,7 @@
 
 ---
 
-## 🐷 ¿Qué es Domino Duel?
+## 🐷 ¿Qué es Domino Venezolano?
 
 Una app minimalista para llevar la cuenta del **dominó criollo** (estilo venezolano, 2 vs 2, primero a 100 puntos). Sin anuncios, sin login, sin complicaciones. Solo tú, tu pana, los rivales y la libreta.
 
@@ -25,13 +25,14 @@ Una app minimalista para llevar la cuenta del **dominó criollo** (estilo venezo
 ## ✨ Características
 
 - 🎯 **Marcador automático** — anota la mano y la app calcula puntos del perdedor
+- 🔒 **Trancas** — marca la mano como tranca y queda señalada en la libreta
 - 🔄 **Mesa visual inteligente** — ubica a cada jugador y la app sienta automáticamente a su compañero al frente
 - 📋 **La Libreta** — historial completo de manos con totales acumulados
 - 🏆 **Marcador de revanchas** — ¿2-1? ¿3-2? La app te recuerda quién manda
 - 💾 **Persistencia** — cierra la app, vuelve mañana, sigues donde quedaste
 - 🎉 **Confeti de victoria** — porque ganar se celebra
-- 📲 **Compartir resultado** — manda la libreta como imagen por WhatsApp
-- 🌗 **Tema claro / oscuro** — según el ambiente del dominó
+- 📲 **Compartir resultado** — manda la libreta completa (marcador y todas las manos) como imagen por WhatsApp
+- 🌗 **Tema claro / oscuro** — sigue el del teléfono hasta que eliges uno
 - 📳 **Vibración háptica** — feedback al anotar puntos
 - 🌶️ **Sabor criollo** — frases venezolanas integradas en la experiencia
 - 🥚 **Easter egg** — toca el logo "LA LIBRETA" 3 veces seguidas durante una partida
@@ -54,8 +55,8 @@ Una app minimalista para llevar la cuenta del **dominó criollo** (estilo venezo
 
 ```bash
 # Requiere Flutter 3.35.4 / Dart 3.9.2
-git clone https://github.com/<tu-usuario>/domino_duel.git
-cd domino_duel
+git clone https://github.com/correiacristofer/domino-venezolano.git
+cd domino-venezolano
 flutter pub get
 
 # Web preview
@@ -76,12 +77,16 @@ lib/
 │   └── round.dart             # Una mano (con timestamp y totales)
 ├── providers/
 │   ├── game_provider.dart     # Lógica de juego + persistencia + revanchas
-│   └── theme_provider.dart    # Toggle claro/oscuro persistente
-└── screens/
-    ├── team_setup_screen.dart # Configurar equipos y jugadores
-    ├── turn_order_screen.dart # Definir orden de juego con validación
-    ├── game_screen.dart       # La libreta + scoreboard
-    └── easter_egg_screen.dart # Sorpresa del autor
+│   └── theme_provider.dart    # Tema: sistema por defecto, claro/oscuro persistente
+├── screens/
+│   ├── team_setup_screen.dart # Configurar equipos y jugadores
+│   ├── turn_order_screen.dart # Definir orden de juego con validación
+│   ├── game_screen.dart       # La libreta + scoreboard
+│   └── easter_egg_screen.dart # Sorpresa del autor
+├── utils/
+│   └── venezuelan_phrases.dart # Frases criollas por categoría
+└── widgets/
+    └── theme_toggle_button.dart
 ```
 
 **Stack:**
@@ -89,14 +94,15 @@ lib/
 - **Persistencia**: `shared_preferences` (`2.5.3`)
 - **Animaciones**: `confetti` (`^0.7.0`)
 - **Compartir**: `share_plus` + `screenshot` + `path_provider`
-- **Audio**: `audioplayers` (system clicks)
+- **Sonido**: clics del sistema (`SystemSound`), sin assets
 
 ## 📐 Reglas implementadas
 
 1. Ganan el primer equipo en llegar a **100 puntos**
-2. **Solo se cuentan las fichas del equipo perdedor** (suma 0–84)
-3. El orden de juego no permite **dos jugadores del mismo equipo consecutivos**
-4. Al ganar puedes pedir **revancha**, reconfigurar quién sale y conservar el marcador de partidas; una **nueva partida** resetea todo
+2. **Solo se cuentan las fichas del equipo perdedor**. La app acepta de 0 a 168 puntos por mano (todas las fichas de un dominó doble seis suman 168)
+3. Las **trancas** se anotan activando «Fue tranca» al registrar la mano
+4. El orden de juego no permite **dos jugadores del mismo equipo consecutivos**
+5. Al ganar puedes pedir **revancha**, reconfigurar quién sale y conservar el marcador de partidas; una **nueva partida** resetea todo
 
 ## 🛣️ Roadmap
 
@@ -111,7 +117,7 @@ lib/
 
 **Cristofer Correia** — CEO de [GobernAI](https://gobernai.com), y según el easter egg de esta app, *"el mejor jugador de dominó de Venezuela y probablemente del mundo"*.
 
-- [Instagram](https://instagram.com/) · [LinkedIn](https://linkedin.com/) · [GitHub](https://github.com/)
+- [GitHub](https://github.com/correiacristofer)
 
 ## 📄 Licencia
 

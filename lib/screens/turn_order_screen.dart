@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/game_provider.dart';
-import '../providers/theme_provider.dart';
-import 'game_screen.dart';
+import '../widgets/theme_toggle_button.dart';
 
 class TurnOrderScreen extends StatefulWidget {
   final String team1Name;
@@ -201,10 +200,10 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
     }
 
     if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const GameScreen()),
-    );
+    // The root route already shows the game once the provider has one, so
+    // going back to it avoids stacking a second GameScreen (and a stale
+    // setup screen) underneath.
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -213,19 +212,11 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.isRematch ? 'Nueva mano, nueva salida' : 'Orden de juego',
+          widget.isRematch ? 'Revancha' : 'Orden de juego',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          Consumer<ThemeProvider>(
-            builder: (context, theme, _) => IconButton(
-              tooltip: theme.isDark ? 'Usar tema claro' : 'Usar tema oscuro',
-              onPressed: theme.toggle,
-              icon: Icon(theme.isDark ? Icons.light_mode : Icons.dark_mode),
-            ),
-          ),
-        ],
+        actions: const [ThemeToggleButton()],
       ),
       body: SafeArea(
         top: false,

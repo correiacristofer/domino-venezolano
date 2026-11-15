@@ -1,6 +1,13 @@
 import 'round.dart';
 
 class Game {
+  /// Points a team needs to win the partida.
+  static const int targetScore = 100;
+
+  /// Upper bound for a single mano: every pip in a double-six set (28 fichas)
+  /// adds up to 168, so no valid mano can score more than that.
+  static const int maxManoPoints = 168;
+
   final String team1Name;
   final String team2Name;
   final String team1Player1;
@@ -36,12 +43,19 @@ class Game {
   }
 
   bool get isGameOver {
-    return team1Score >= 100 || team2Score >= 100;
+    return team1Score >= targetScore || team2Score >= targetScore;
+  }
+
+  /// 0 or 1 once the partida is over, null while it is still being played.
+  int? get winningTeamIndex {
+    if (!isGameOver) return null;
+    return team1Score >= targetScore ? 0 : 1;
   }
 
   String? get winner {
-    if (!isGameOver) return null;
-    return team1Score >= 100 ? team1Name : team2Name;
+    final index = winningTeamIndex;
+    if (index == null) return null;
+    return index == 0 ? team1Name : team2Name;
   }
 
   Map<String, dynamic> _getPlayerInfo(int playerId) {

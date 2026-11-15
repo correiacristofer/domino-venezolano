@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
-import '../providers/theme_provider.dart';
+import '../widgets/theme_toggle_button.dart';
 import 'turn_order_screen.dart';
 
 class TeamSetupScreen extends StatefulWidget {
@@ -19,10 +19,13 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
   final _team1Player2Controller = TextEditingController();
   final _team2Player1Controller = TextEditingController();
   final _team2Player2Controller = TextEditingController();
+  late final String _randomPhrase;
 
   @override
   void initState() {
     super.initState();
+    // Picked once so the phrase does not change on every rebuild.
+    _randomPhrase = context.read<GameProvider>().getRandomPhrase();
     _loadLastTeamNames();
   }
 
@@ -81,8 +84,6 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<GameProvider>(context);
-    final randomPhrase = provider.getRandomPhrase();
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -96,16 +97,7 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
               children: [
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Consumer<ThemeProvider>(
-                    builder: (context, theme, _) => IconButton(
-                      tooltip: theme.isDark ? 'Usar tema claro' : 'Usar tema oscuro',
-                      onPressed: theme.toggle,
-                      icon: Icon(
-                        theme.isDark ? Icons.light_mode : Icons.dark_mode,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
+                  child: ThemeToggleButton(color: colors.onSurfaceVariant),
                 ),
                 
                 // App Title
@@ -137,7 +129,7 @@ class _TeamSetupScreenState extends State<TeamSetupScreen> {
                     border: Border.all(color: colors.outlineVariant, width: 1),
                   ),
                   child: Text(
-                    randomPhrase,
+                    _randomPhrase,
                     style: TextStyle(
                       color: colors.primary,
                       fontSize: 18,

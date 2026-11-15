@@ -81,7 +81,10 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('start-game')));
     await tester.tap(find.byKey(const Key('start-game')));
-    await tester.pumpAndSettle();
+    // The screen is the home route here, so it stays up with its spinner;
+    // just let the async start finish.
+    await tester.pump();
+    await tester.pump();
 
     expect(gameProvider.currentGame?.playingOrder, [0, 2, 1, 3]);
   });
