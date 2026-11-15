@@ -5,7 +5,7 @@ name: Release
 # releases/latest/download/domino-venezolano.apk, so the newest release is
 # always what people get.
 #
-# Requires the signing secrets (tool/release/crear_clave_android.ps1). Without
+# Requires the signing secrets (tool/release/crear_clave_android.cmd). Without
 # them the job stops instead of publishing a debug-signed APK, which could
 # never be updated by later releases.
 
@@ -41,7 +41,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::Faltan los secretos de la clave de firma. Ejecuta tool/release/crear_clave_android.ps1 (ver store/PUBLICACION.md)."
+            echo "::error::Faltan los secretos de la clave de firma. Haz doble clic en tool/release/crear_clave_android.cmd (ver store/PUBLICACION.md)."
             exit 1
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
@@ -65,8 +65,12 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+        # --latest: GitHub otherwise picks "latest" by comparing versions, and
+        # the old v2 release (May 2026) would keep winning over a lower tag,
+        # breaking releases/latest/download/domino-venezolano.apk.
         run: |
           gh release create "$GITHUB_REF_NAME" \
             domino-venezolano.apk domino-venezolano.apk.sha256 \
             --title "Domino Venezolano ${GITHUB_REF_NAME#v}" \
-            --generate-notes
+            --generate-notes \
+            --latest
