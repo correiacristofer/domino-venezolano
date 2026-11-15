@@ -47,6 +47,10 @@ android {
 
         if (sideload) {
             ndk {
+                // The Flutter Gradle plugin has already added armeabi-v7a,
+                // arm64-v8a and x86_64 here when it was applied, so replace
+                // the list instead of adding to it.
+                abiFilters.clear()
                 abiFilters += listOf("armeabi-v7a", "arm64-v8a")
             }
         }
