@@ -149,22 +149,23 @@ Future<void> _settle(WidgetTester tester) async {
 /// wide as Roboto, which would flag overflows no phone shows. Load the real
 /// Roboto that ships with the Flutter SDK instead.
 Future<void> _loadRoboto() async {
-  final dartSdkBin = File(Platform.resolvedExecutable).parent;
-  final candidates = [
-    if (Platform.environment['FLUTTER_ROOT'] case final root?)
-      '$root/bin/cache/artifacts/material_fonts',
-    '${dartSdkBin.parent.parent.path}/artifacts/material_fonts',
-  ];
-  final dir = candidates
-      .map(Directory.new)
-      .firstWhere(
-        (d) => d.existsSync(),
-        orElse: () => throw StateError('Roboto no encontrada en $candidates'),
-      );
+  final root = Platform.environment['FLUTTER_ROOT'];
+  if (root == null) throw StateError('FLUTTER_ROOT no está definido');
   final loader = FontLoader('Roboto');
-  for (final weight in ['regular', 'medium', 'bold', 'black']) {
-    final bytes = File('${dir.path}/roboto-$weight.ttf').readAsBytesSync();
-    loader.addFont(Future.value(ByteData.sublistView(bytes)));
+  for (final weight in ['Regular', 'Medium', 'Bold', 'Black']) {
+    // The Dart SDK always ships DevTools with Roboto; material_fonts is only
+    // downloaded once an app has been built.
+    final candidates = [
+      '$root/bin/cache/dart-sdk/bin/resources/devtools/assets/fonts/Roboto/'
+          'Roboto-$weight.ttf',
+      '$root/bin/cache/artifacts/material_fonts/'
+          'roboto-${weight.toLowerCase()}.ttf',
+    ];
+    final file = candidates.map(File.new).firstWhere(
+          (f) => f.existsSync(),
+          orElse: () => throw StateError('Roboto no encontrada: $candidates'),
+        );
+    loader.addFont(Future.value(ByteData.sublistView(file.readAsBytesSync())));
   }
   await loader.load();
 }
