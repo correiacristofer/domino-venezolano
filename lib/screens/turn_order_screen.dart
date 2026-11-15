@@ -176,7 +176,7 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
     final error = _validateOrder();
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
+        SnackBar(content: Text(error), backgroundColor: Colors.red.shade800),
       );
       return;
     }
@@ -458,25 +458,31 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.casino_outlined,
-                          color: colors.onPrimaryContainer, size: 30),
-                      const SizedBox(height: 4),
-                      Text(
-                        'MESA',
-                        style: TextStyle(
-                          color: colors.onPrimaryContainer,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
+                  // The table has a fixed size: large accessibility text
+                  // scales down to fit instead of spilling out.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.casino_outlined,
+                            color: colors.onPrimaryContainer, size: 30),
+                        const SizedBox(height: 4),
+                        Text(
+                          'MESA',
+                          style: TextStyle(
+                            color: colors.onPrimaryContainer,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Icon(Icons.rotate_right,
-                          color: colors.onPrimaryContainer.withValues(alpha: 0.7),
-                          size: 18),
-                    ],
+                        const SizedBox(height: 2),
+                        Icon(Icons.rotate_right,
+                            color:
+                                colors.onPrimaryContainer.withValues(alpha: 0.7),
+                            size: 18),
+                      ],
+                    ),
                   ),
                 ),
                 Positioned(
@@ -539,48 +545,60 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
               width: playerId == null ? 1.5 : 2,
             ),
           ),
+          // Seats have a fixed size: large accessibility text scales down
+          // to fit instead of spilling out.
           child: player == null
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, color: colors.onSurfaceVariant, size: 20),
-                    Text(
-                      '${position + 1}º${position == 0 ? ' · SALE' : ''}',
-                      style: TextStyle(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+              ? FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, color: colors.onSurfaceVariant, size: 20),
+                      Text(
+                        '${position + 1}º${position == 0 ? ' · SALE' : ''}',
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 )
               : Stack(
                   children: [
                     Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${position + 1}º${position == 0 ? ' · SALE' : ''}',
-                            style: TextStyle(
-                              color: teamColor,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                            ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: ConstrainedBox(
+                          // Keeps long names ellipsized at the seat's width.
+                          constraints: BoxConstraints(maxWidth: width - 16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${position + 1}º${position == 0 ? ' · SALE' : ''}',
+                                style: TextStyle(
+                                  color: teamColor,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                player['name']! as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: colors.onSurface,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 3),
-                          Text(
-                            player['name']! as String,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: colors.onSurface,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                     Positioned(
