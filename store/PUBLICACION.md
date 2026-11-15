@@ -16,8 +16,9 @@ más abajo como opción de pago para el futuro.
 1. **Fusiona los PR pendientes** en `main`. El workflow `Pages` publica la
    página de descarga y la versión web cada vez que cambia `main`. GitHub
    Pages ya está activado con origen «GitHub Actions».
-2. **Correo de contacto:** sustituye `[CORREO PENDIENTE]` en
-   `docs/index.html` y `docs/privacidad.html`.
+2. **Contacto:** la web no muestra correo; los avisos llegan por GitHub
+   Issues. Si algún día quieres uno, añádelo en `docs/index.html` y
+   `docs/privacidad.html`.
 3. **Clave de firma (una sola vez).** Todas las versiones del APK deben ir
    firmadas con la misma clave; si no, Android no deja instalar una
    actualización encima de la anterior. Abre la carpeta `tool\release` del

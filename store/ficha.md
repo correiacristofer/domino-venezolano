@@ -5,7 +5,8 @@ principal: español (Latinoamérica en Play, `es-419`; España y México en App
 Store). Los límites de caracteres están comprobados con
 `node tool/store/check_ficha.js`.
 
-Pendiente antes de publicar: sustituir `[CORREO PENDIENTE]` aquí y en `docs/`.
+Antes de publicar en una tienda hace falta un correo de contacto (Play lo
+exige). La web actual no muestra ninguno.
 
 ---
 
@@ -19,7 +20,7 @@ Pendiente antes de publicar: sustituir `[CORREO PENDIENTE]` aquí y en `docs/`.
 | Precio | Gratis, sin compras dentro de la app, sin anuncios |
 | Web / soporte | https://correiacristofer.github.io/domino-venezolano/ |
 | Política de privacidad | https://correiacristofer.github.io/domino-venezolano/privacidad.html |
-| Correo de contacto | [CORREO PENDIENTE] |
+| Correo de contacto | Hace falta uno solo si se publica en tiendas |
 | Identificador | com.correiacristofer.dominovenezolano |
 
 ## Google Play
