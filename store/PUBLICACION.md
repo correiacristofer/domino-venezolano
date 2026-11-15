@@ -20,13 +20,13 @@ más abajo como opción de pago para el futuro.
    `docs/index.html` y `docs/privacidad.html`.
 3. **Clave de firma (una sola vez).** Todas las versiones del APK deben ir
    firmadas con la misma clave; si no, Android no deja instalar una
-   actualización encima de la anterior. Instala un JDK 17
-   (`winget install EclipseAdoptium.Temurin.17.JDK`) y ejecuta:
-   ```
-   powershell -ExecutionPolicy Bypass -File tool\release\crear_clave_android.ps1
-   ```
-   Elige una contraseña, responde `s` para cargarla en GitHub y guarda el
-   `.jks` y la contraseña en tu gestor de contraseñas.
+   actualización encima de la anterior. Abre la carpeta `tool\release` del
+   proyecto y haz **doble clic en `crear_clave_android.cmd`**. El asistente
+   instala el JDK si falta, comprueba tu sesión de GitHub, te pide una
+   contraseña nueva y sube la clave a GitHub (pulsa Enter cuando lo pregunte).
+   Guarda `%USERPROFILE%\claves\domino-venezolano-upload.jks` y la contraseña
+   en tu gestor de contraseñas. Si lo vuelves a abrir, reutiliza la clave
+   existente: nunca la sobrescribe.
 4. **Publicar una versión:** crea y sube una etiqueta.
    ```
    git tag v1.0.0
