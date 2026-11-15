@@ -439,9 +439,10 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
+                // Narrow enough to leave a gap next to the side seats.
                 Container(
-                  width: dimension * 0.36,
-                  height: dimension * 0.36,
+                  width: dimension * 0.3,
+                  height: dimension * 0.3,
                   decoration: BoxDecoration(
                     color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(22),

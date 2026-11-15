@@ -1,0 +1,66 @@
+:root {
+  --bg: #fffbf3;
+  --text: #1d1b16;
+  --muted: #5c574c;
+  --card: #f4ecdf;
+  --border: #e2d6c2;
+  --accent: #7a5600;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111111;
+    --text: #f1ece3;
+    --muted: #b9b1a3;
+    --card: #1d1b18;
+    --border: #39342c;
+    --accent: #ffcc00;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+header img { width: 72px; height: 72px; border-radius: 16px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; }
+h2 { font-size: 1.15rem; margin: 2rem 0 .5rem; }
+p, li { color: var(--text); }
+.muted { color: var(--muted); font-size: .95rem; }
+.flag { height: 6px; border-radius: 3px; margin: 16px 0 24px;
+  background: linear-gradient(90deg, #ffcc00 0 33%, #00247d 33% 66%, #cf142b 66%); }
+.card { background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 20px; }
+a { color: var(--accent); }
+nav { margin-top: 40px; display: flex; gap: 20px; flex-wrap: wrap; }
+ol { padding-left: 1.3rem; }
+ol li { margin-bottom: .4rem; }
+
+.buttons { display: grid; gap: 12px; margin: 24px 0; }
+@media (min-width: 560px) { .buttons { grid-template-columns: 1fr 1fr; } }
+.btn {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 18px; border-radius: 14px; text-decoration: none;
+  font-weight: 700; font-size: 1.05rem;
+  color: var(--text); background: var(--card); border: 1px solid var(--border);
+}
+.btn small { font-weight: 400; font-size: .85rem; color: var(--muted); }
+.btn-primary { background: #7a5600; border-color: #7a5600; color: #fff; }
+.btn-primary small { color: #f3e3bd; }
+@media (prefers-color-scheme: dark) {
+  .btn-primary { background: #ffcc00; border-color: #ffcc00; color: #111; }
+  .btn-primary small { color: #3d3000; }
+}
+
+.shots {
+  display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+.shots img {
+  width: 200px; height: auto; flex: none; border-radius: 14px;
+  border: 1px solid var(--border); scroll-snap-align: start;
+}

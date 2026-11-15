@@ -1,0 +1,60 @@
+name: Pages
+
+# Publishes the download page, support and privacy pages (docs/) and the web
+# version of the app (/app/, meant for iPhone users) on GitHub Pages. PRs
+# only build the site to prove it works; main deploys it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+          cache: true
+
+      # Serve the web engine from Pages instead of Google's CDN.
+      - run: >
+          flutter build web --release
+          --base-href /domino-venezolano/app/
+          --no-web-resources-cdn
+          --no-wasm-dry-run
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r docs/. _site/
+          cp -r build/web _site/app
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
