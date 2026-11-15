@@ -65,8 +65,12 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+        # --latest: GitHub otherwise picks "latest" by comparing versions, and
+        # the old v2 release (May 2026) would keep winning over a lower tag,
+        # breaking releases/latest/download/domino-venezolano.apk.
         run: |
           gh release create "$GITHUB_REF_NAME" \
             domino-venezolano.apk domino-venezolano.apk.sha256 \
             --title "Domino Venezolano ${GITHUB_REF_NAME#v}" \
-            --generate-notes
+            --generate-notes \
+            --latest
