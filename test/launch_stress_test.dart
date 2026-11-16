@@ -3,6 +3,7 @@
 // other framework error fails the test and names the case that broke.
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -161,7 +162,9 @@ Future<void> _loadRoboto() async {
       '$root/bin/cache/artifacts/material_fonts/'
           'roboto-${weight.toLowerCase()}.ttf',
     ];
-    final file = candidates.map(File.new).firstWhere(
+    final file = candidates
+        .map(File.new)
+        .firstWhere(
           (f) => f.existsSync(),
           orElse: () => throw StateError('Roboto no encontrada: $candidates'),
         );
@@ -337,10 +340,52 @@ void main() {
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      // Text contrast is checked from the colours themselves below: the
+      // pixel-based guideline misreads 10 px text on Linux antialiasing.
       handle.dispose();
       await tester.pumpWidget(const SizedBox());
     }
     tester.platformDispatcher.clearPlatformBrightnessTestValue();
+  });
+
+  test('los colores del texto cumplen WCAG AA (4,5:1)', () {
+    double luminance(Color c) {
+      double channel(double v) => v <= 0.03928
+          ? v / 12.92
+          : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+      return 0.2126 * channel(c.r) +
+          0.7152 * channel(c.g) +
+          0.0722 * channel(c.b);
+    }
+
+    double ratio(Color a, Color b) {
+      final x = luminance(a), y = luminance(b);
+      return (math.max(x, y) + 0.05) / (math.min(x, y) + 0.05);
+    }
+
+    for (final brightness in Brightness.values) {
+      final s = buildAppTheme(brightness).colorScheme;
+      final dark = brightness == Brightness.dark;
+      // Same shades as GameScreen._successColor and _dangerColor.
+      final success = dark ? Colors.green.shade300 : Colors.green.shade900;
+      final danger = dark ? Colors.red.shade300 : Colors.red.shade800;
+      final pairs = <String, (Color, Color)>{
+        'nombres y orden de juego': (s.onSurfaceVariant, s.surfaceContainerLow),
+        'equipo 1': (s.primary, s.surfaceContainerLow),
+        'equipo 2': (s.tertiary, s.surfaceContainerLow),
+        'ganador de la mano': (success, s.surfaceContainerHigh),
+        'perdedor de la mano': (danger, s.surfaceContainerHigh),
+        'frase sobre ámbar': (const Color(0xFF201B13), Colors.amber.shade800),
+        'frase sobre naranja': (Colors.white, Colors.deepOrange.shade900),
+        'error del orden de juego': (Colors.white, Colors.red.shade800),
+      };
+      pairs.forEach((name, pair) {
+        expect(
+          ratio(pair.$1, pair.$2),
+          greaterThanOrEqualTo(4.5),
+          reason: '$name, ${brightness.name}',
+        );
+      });
+    }
   });
 }

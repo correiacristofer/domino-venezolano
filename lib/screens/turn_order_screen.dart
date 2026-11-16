@@ -176,7 +176,11 @@ class _TurnOrderScreenState extends State<TurnOrderScreen> {
     final error = _validateOrder();
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red.shade800),
+        SnackBar(
+          // White text: the default one turns dark in the dark theme.
+          content: Text(error, style: const TextStyle(color: Colors.white)),
+          backgroundColor: Colors.red.shade800,
+        ),
       );
       return;
     }
