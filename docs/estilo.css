@@ -49,12 +49,32 @@ ol li { margin-bottom: .4rem; }
   color: var(--text); background: var(--card); border: 1px solid var(--border);
 }
 .btn small { font-weight: 400; font-size: .85rem; color: var(--muted); }
-.btn-primary { background: #7a5600; border-color: #7a5600; color: #fff; }
-.btn-primary small { color: #f3e3bd; }
-@media (prefers-color-scheme: dark) {
-  .btn-primary { background: #ffcc00; border-color: #ffcc00; color: #111; }
-  .btn-primary small { color: #3d3000; }
+
+/* The button for the visitor's phone comes first and stands out. The is-ios,
+   is-android and is-desktop classes come from the script in index.html;
+   without it the Android button is the highlighted one. */
+.btn-android, .is-ios .btn-iphone {
+  background: #7a5600; border-color: #7a5600; color: #fff;
 }
+.btn-android small, .is-ios .btn-iphone small { color: #f3e3bd; }
+.is-ios .btn-android {
+  background: var(--card); border-color: var(--border); color: var(--text);
+}
+.is-ios .btn-android small { color: var(--muted); }
+.is-ios .btn-iphone { order: -1; }
+@media (prefers-color-scheme: dark) {
+  .btn-android, .is-ios .btn-iphone {
+    background: #ffcc00; border-color: #ffcc00; color: #111;
+  }
+  .btn-android small, .is-ios .btn-iphone small { color: #3d3000; }
+  .is-ios .btn-android {
+    background: var(--card); border-color: var(--border); color: var(--text);
+  }
+  .is-ios .btn-android small { color: var(--muted); }
+}
+.only-ios, .only-desktop { display: none; }
+.is-ios .only-ios, .is-desktop .only-desktop { display: block; }
+.is-ios .not-ios { display: none; }
 
 .shots {
   display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;

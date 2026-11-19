@@ -41,6 +41,14 @@
     <img src="icons/Icon-192.png" alt="">
     <span>Cargando la libreta…</span>
   </div>
+  <script>
+    // Ask the browser not to clear the saved partidas when space runs low.
+    // Safari grants it to apps added to the home screen; elsewhere it is a
+    // harmless no-op.
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(function () {});
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

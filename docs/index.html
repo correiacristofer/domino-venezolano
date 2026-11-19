@@ -5,11 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Domino Venezolano · Descargar</title>
   <meta name="description" content="La libreta digital del dominó criollo: anota las manos, lleva la cuenta hasta 100 y comparte el resultado. Gratis para Android y iPhone.">
-  <meta property="og:title" content="Domino Venezolano">
-  <meta property="og:description" content="La libreta del dominó criollo, gratis para Android y iPhone.">
+  <link rel="canonical" href="https://correiacristofer.github.io/domino-venezolano/">
+
+  <!-- Preview when the link is shared on WhatsApp, Telegram, Facebook or X -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Domino Venezolano">
+  <meta property="og:locale" content="es_VE">
+  <meta property="og:url" content="https://correiacristofer.github.io/domino-venezolano/">
+  <meta property="og:title" content="Domino Venezolano · La libreta del dominó criollo">
+  <meta property="og:description" content="Anota las manos y la app lleva la cuenta hasta 100. Gratis para Android y iPhone, sin cuentas ni anuncios.">
   <meta property="og:image" content="https://correiacristofer.github.io/domino-venezolano/icon.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Icono de Domino Venezolano: una ficha doble seis">
+  <meta name="twitter:card" content="summary">
+
   <link rel="icon" href="icon.png">
   <link rel="stylesheet" href="estilo.css">
+  <script>
+    // Tag the page with the visitor's system so the right button comes
+    // first. Without JavaScript both buttons simply stay as they are.
+    (function () {
+      var ua = navigator.userAgent || '';
+      var ios = /iPhone|iPad|iPod/.test(ua) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var android = /Android/.test(ua);
+      document.documentElement.className +=
+        ios ? ' is-ios' : android ? ' is-android' : ' is-desktop';
+    })();
+  </script>
 </head>
 <body>
 <main>
@@ -27,15 +52,18 @@
   y sin anuncios.</p>
 
   <div class="buttons">
-    <a class="btn btn-primary" href="https://github.com/correiacristofer/domino-venezolano/releases/latest/download/domino-venezolano.apk">
+    <a class="btn btn-android" href="https://github.com/correiacristofer/domino-venezolano/releases/latest/download/domino-venezolano.apk">
       Descargar para Android
-      <small>Archivo APK · última versión</small>
+      <small class="not-ios">Archivo APK · última versión · Android 7 o superior</small>
+      <small class="only-ios">Solo para teléfonos Android, no funciona en iPhone</small>
     </a>
-    <a class="btn" href="app/">
+    <a class="btn btn-iphone" href="app/">
       Usar en iPhone
-      <small>Se abre en Safari y se instala en la pantalla de inicio</small>
+      <small>Se abre en Safari y se añade a la pantalla de inicio</small>
     </a>
   </div>
+  <p class="muted only-desktop">Abre esta página en tu teléfono para instalar
+  la app: <strong>correiacristofer.github.io/domino-venezolano</strong></p>
 
   <div class="shots">
     <img src="img/01_libreta.webp" alt="La libreta con las manos anotadas" loading="lazy">
@@ -43,31 +71,53 @@
     <img src="img/04_victoria.webp" alt="Pantalla de victoria con el marcador de revanchas" loading="lazy">
   </div>
 
-  <h2>Instalar en Android</h2>
+  <h2 id="android">Instalar en Android</h2>
   <ol>
-    <li>Toca <strong>Descargar para Android</strong> y abre el archivo descargado.</li>
-    <li>Si el teléfono lo pide, permite <strong>instalar apps desconocidas</strong>
-      para tu navegador o tu gestor de archivos.</li>
-    <li>Toca <strong>Instalar</strong>. Si Play Protect avisa de que es una app
-      desconocida, es porque no viene de Play Store: elige
-      <strong>Instalar de todas formas</strong>.</li>
+    <li>Toca <strong>Descargar para Android</strong>. Si el navegador avisa de
+      que el archivo puede ser dañino, toca <strong>Descargar de todas
+      formas</strong>: lo dice con cualquier app que no venga de Play Store.</li>
+    <li>Cuando termine, toca <strong>Abrir</strong>. Si no lo ves, busca
+      <em>domino-venezolano.apk</em> en la app <strong>Archivos</strong>, dentro
+      de <strong>Descargas</strong>.</li>
+    <li>Si aparece que tu teléfono no puede instalar apps desconocidas de esta
+      fuente, toca <strong>Ajustes</strong>, activa <strong>Permitir de esta
+      fuente</strong> y vuelve atrás.</li>
+    <li>Toca <strong>Instalar</strong>. Si Play Protect dice que no reconoce la
+      app, toca <strong>Más detalles</strong> y luego <strong>Instalar de todas
+      formas</strong>. En Xiaomi puede salir antes un análisis de seguridad:
+      espera a que termine y toca <strong>Instalar</strong>.</li>
   </ol>
-  <p class="muted">Para actualizar, descarga la nueva versión e instálala encima:
-  tus partidas se mantienen.</p>
+  <p class="muted">Para actualizar, descarga la nueva versión desde esta página e
+  instálala encima, sin desinstalar la anterior: así tus partidas se mantienen.
+  Si desinstalas la app, las partidas se borran.</p>
 
-  <h2>Usar en iPhone</h2>
+  <h2 id="iphone">Usar en iPhone</h2>
   <ol>
-    <li>Abre <a href="app/">la versión web</a> en <strong>Safari</strong>.</li>
-    <li>Toca el botón <strong>Compartir</strong> y luego
-      <strong>Añadir a pantalla de inicio</strong>.</li>
-    <li>Ábrela desde su icono, como cualquier app.</li>
+    <li>Toca <strong>Usar en iPhone</strong>. Si la página se abrió dentro de
+      WhatsApp, Instagram u otra app, ábrela antes en <strong>Safari</strong>
+      (botón de la brújula o «Abrir en Safari»).</li>
+    <li>Cuando veas la libreta, toca <strong>Compartir</strong>: el cuadrado con
+      una flecha hacia arriba. En iOS 26 está dentro del botón
+      <strong>···</strong>.</li>
+    <li>Elige <strong>Añadir a pantalla de inicio</strong> (desliza hacia abajo
+      si no aparece) y toca <strong>Añadir</strong>.</li>
+    <li>Desde ahora ábrela con su icono, como cualquier app.</li>
   </ol>
   <p class="muted">La versión web necesita conexión para abrirse. Las partidas se
-  guardan en tu iPhone, dentro de los datos de esa web: si los borras desde los
-  ajustes de Safari, se borran también.</p>
+  guardan en tu iPhone. Úsala desde el icono: si solo la abres en una pestaña de
+  Safari, Safari puede borrar sus datos tras unos días sin usarla, y también se
+  borran si eliminas los datos de sitios web en los ajustes de Safari.</p>
 
   <h2>Preguntas frecuentes</h2>
   <div class="card">
+    <p><strong>¿Es segura? ¿Qué permisos pide?</strong><br>
+    No pide ningún permiso: ni Internet, ni contactos, ni fotos, ni ubicación.
+    Los avisos al instalar salen porque no viene de Play Store. El código es
+    público.</p>
+    <p><strong>Me sale «App no instalada».</strong><br>
+    Si tenías una versión descargada antes de noviembre de 2026, desinstálala
+    primero: estaba firmada de otra forma y Android no deja instalar encima. Si
+    no es tu caso, comprueba que tienes espacio libre y Android 7 o superior.</p>
     <p><strong>¿Cómo anoto una mano?</strong><br>
     Toca el panel del equipo que ganó la mano y escribe los puntos.</p>
     <p><strong>¿Y si fue tranca?</strong><br>
