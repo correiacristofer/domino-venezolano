@@ -27,13 +27,15 @@ class _GameScreenState extends State<GameScreen> {
 
   final ScreenshotController _shareController = ScreenshotController();
 
+  // Light-theme shades chosen for at least 4.5:1 contrast on the cards
+  // (WCAG AA), so names stay readable outdoors and for low vision.
   Color get _successColor => Theme.of(context).brightness == Brightness.dark
       ? Colors.green.shade300
-      : Colors.green.shade700;
+      : Colors.green.shade900;
 
   Color get _dangerColor => Theme.of(context).brightness == Brightness.dark
       ? Colors.red.shade300
-      : Colors.red.shade700;
+      : Colors.red.shade800;
 
   @override
   void initState() {
@@ -129,7 +131,9 @@ class _GameScreenState extends State<GameScreen> {
       SnackBar(
         content: Text(
           phrase,
+          // Dark text: the default light text on amber is hard to read.
           style: const TextStyle(
+            color: Color(0xFF201B13),
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
@@ -153,11 +157,12 @@ class _GameScreenState extends State<GameScreen> {
             content: Text(
               provider.getCloseToWinPhrase(),
               style: const TextStyle(
+                color: Colors.white,
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            backgroundColor: Colors.deepOrange.shade700,
+            backgroundColor: Colors.deepOrange.shade900,
             duration: const Duration(milliseconds: 2200),
             behavior: SnackBarBehavior.floating,
           ),
@@ -229,8 +234,12 @@ class _GameScreenState extends State<GameScreen> {
           // direction handed over explicitly.
           InheritedTheme.captureAll(
             context,
+            // The picture is for other people: keep it the same whatever
+            // text size this phone uses, or large text would clip it.
             MediaQuery(
-              data: MediaQuery.of(context),
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.noScaling,
+              ),
               child: Directionality(
                 textDirection: Directionality.of(context),
                 child: Material(
@@ -423,10 +432,19 @@ Manos jugadas: ${game.rounds.length}
                   );
                 }
 
+                // With large accessibility text or a short screen the header
+                // and panels scroll inside the top 60 %, so the libreta
+                // always keeps the rest instead of being pushed off screen.
                 return Column(
                   children: [
-                    header,
-                    scorePanels,
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight * 0.6,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(children: [header, scorePanels]),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     Expanded(child: libreta),
                   ],
@@ -498,6 +516,9 @@ Manos jugadas: ${game.rounds.length}
               ThemeToggleButton(color: colors.onSurfaceVariant),
               Expanded(
                 child: GestureDetector(
+                  // Hidden easter egg: screen readers should read the title,
+                  // not announce a button that seems to do nothing.
+                  excludeFromSemantics: true,
                   onTap: _handleLogoTap,
                   // Scales down instead of overflowing on narrow phones or
                   // with large accessibility text.
@@ -837,14 +858,16 @@ Manos jugadas: ${game.rounds.length}
           Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
+                // Grows with large accessibility text instead of clipping.
+                constraints: const BoxConstraints(minWidth: 50, minHeight: 50),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: colors.outlineVariant, width: 2),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
@@ -866,7 +889,7 @@ Manos jugadas: ${game.rounds.length}
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -912,8 +935,11 @@ Manos jugadas: ${game.rounds.length}
                 ),
               ),
               Container(
+                // Capped so the team names keep room in landscape with large
+                // accessibility text; the points shrink to fit instead.
+                constraints: const BoxConstraints(maxWidth: 88),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: successColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
@@ -922,27 +948,31 @@ Manos jugadas: ${game.rounds.length}
                     width: 1.5,
                   ),
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      '+${round.points}',
-                      style: TextStyle(
-                        color: successColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (round.isTranca)
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        'TRANCA',
+                        '+${round.points}',
                         style: TextStyle(
                           color: successColor,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                  ],
+                      if (round.isTranca)
+                        Text(
+                          'TRANCA',
+                          style: TextStyle(
+                            color: successColor,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1043,6 +1073,9 @@ class _VictoryDialogState extends State<_VictoryDialog> {
     return Stack(
       children: [
         AlertDialog(
+          // Title and content scroll together, so the buttons stay reachable
+          // on small phones and with large accessibility text.
+          scrollable: true,
           title: Column(
             children: [
               Icon(Icons.emoji_events, size: 80, color: colors.primary),
@@ -1240,6 +1273,8 @@ class _AddManoDialogState extends State<_AddManoDialog> {
     final successColor = widget.successColor;
 
     return AlertDialog(
+      // The keyboard covers half the screen: let the whole dialog scroll.
+      scrollable: true,
       title: Column(
         children: [
           Row(
